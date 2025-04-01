@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل الدخول</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>شركة ناقلات النفط العراقية</h1>
+        <h1>قسم الملاحين - شعبة التطقيم</h1>
+        <h1>نظام ادارة الطواقم البحرية</h1>
+        <h1>🔐 تسجيل الدخول</h1>
+        <label>البريد الإلكتروني:</label>
+        <input type="email" id="email" placeholder="أدخل بريدك الإلكتروني">
+        <label>كلمة المرور:</label>
+        <input type="password" id="password" placeholder="أدخل كلمة المرور">
+        <button onclick="login()">🚀 تسجيل الدخول</button>
+        <p id="login-error" style="color: red;"></p>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <script src="login.js"></script>
+</body>
+</html>

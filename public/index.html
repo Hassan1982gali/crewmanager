@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ادارة طواقم شركة ناقلات النفط العراقية</title>
+<button class="logout-button" onclick="logout()">🚪 تسجيل الخروج</button>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <style>
+@media print {
+    table:not(.summary-table) th:last-child, /* ✅ إخفاء عمود الإجراءات فقط من جدول الطاقم */
+    table:not(.summary-table) td:last-child { /* ✅ التأكد من عدم إخفاء أي أعمدة من السمري */
+        display: none;
+    }
+}
+/* ✅ تحسين تنسيق الطباعة */
+@media print {
+    .summary-table-print {
+        display: table; /* ✅ يظهر فقط أثناء الطباعة */
+        width: 100%;
+        margin-bottom: 20px;
+        border-collapse: collapse;
+    }
+
+    .summary-table-print th, .summary-table-print td {
+        border: 1px solid black;
+        padding: 8px;
+        text-align: center;
+        font-size: 14px;
+    }
+
+    .summary-table {
+        display: none; /* ❌ يخفي الملخص من الصفحة الرئيسية أثناء الطباعة */
+    }
+}
+    </style>
+</head>
+<body>
+    <h1>ادارة طواقم شركة ناقلات النفط العراقية</h1>
+    <h1>شعبة التطقيم - حسن غالي شلال</h1>
+    
+    <table class="summary-table">
+        <thead>
+            <tr>
+                <th>الرتبة</th>
+                <th>العدد</th>
+            </tr>
+        </thead>
+        <tbody id="summary-body">
+            <!-- ✅ يتم تعبئته ديناميكيًا -->
+        </tbody>
+    </table>
+
+    <div class="filters-container">
+        <div class="filter-group">
+            <label>🎖 اختر الرتبة:</label>
+            <div class="dropdown">
+                <button class="dropdown-button" onclick="toggleDropdown('ranks-dropdown')">🎖 الرتب</button>
+                <div id="ranks-dropdown" class="dropdown-content">
+                    <input type="text" class="filter-search" placeholder="🔍 بحث..." onkeyup="filterDropdown('ranks-container', this)">
+                    <div id="ranks-container" class="checkbox-list"></div>
+                    <div class="dropdown-buttons">
+                        <button onclick="applyFilters()">OK</button>
+                        <button onclick="clearFilters('ranks-container')">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="filter-group">
+            <label>🚢 اختر الناقلة:</label>
+            <div class="dropdown">
+                <button class="dropdown-button" onclick="toggleDropdown('ships-dropdown')">🚢 الناقلات</button>
+                <div id="ships-dropdown" class="dropdown-content">
+                    <input type="text" class="filter-search" placeholder="🔍 بحث..." onkeyup="filterDropdown('ships-container', this)">
+                    <div id="ships-container" class="checkbox-list"></div>
+                    <div class="dropdown-buttons">
+                        <button onclick="applyFilters()">OK</button>
+                        <button onclick="clearFilters('ships-container')">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="filter-group">
+            <label>🟢 حالة الموظف:</label>
+            <div class="dropdown">
+                <button class="dropdown-button" onclick="toggleDropdown('status-dropdown')">🟢 الحالات</button>
+                <div id="status-dropdown" class="dropdown-content">
+                    <input type="text" class="filter-search" placeholder="🔍 بحث..." onkeyup="filterDropdown('status-container', this)">
+                    <div id="status-container" class="checkbox-list"></div>
+                    <div class="dropdown-buttons">
+                        <button onclick="applyFilters()">OK</button>
+                        <button onclick="clearFilters('status-container')">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="print-button" onclick="printFilteredData()">🖨️ طباعة</button>
+    <button class="add-button" onclick="showAddModal()">➕ إضافة موظف</button>
+
+    <div class="search-container">
+        <input type="text" id="search-input" placeholder="🔍 ابحث عن اسم..." onkeyup="searchByName()">
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>الاسم</th>
+                <th>الرتبة</th>
+                <th>الناقلة</th>
+                <th>تاريخ الالتحاق</th>
+                <th>مدة الالتحاق <button onclick="sortByDuration('join_duration')">⬆⬇</button></th>
+                <th>تاريخ النزول</th>
+                <th>مدة النزول <button onclick="sortByDuration('leave_duration')">⬆⬇</button></th>
+                <th>الحالة</th>
+                <th>الملاحظات</th>
+                <th>إجراءات</th>
+            </tr>
+        </thead>
+        <tbody id="employee-table-body"></tbody>
+    </table>
+
+<!-- ✅ نافذة إضافة موظف (Modal) -->
+<div id="addModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeAddModal()">&times;</span>
+        <h2>إضافة موظف جديد</h2>
+
+        <label>الاسم:</label>
+        <input type="text" id="add-name">
+
+        <label>الرتبة:</label>
+        <select id="add-rank"></select>
+
+        <label>الناقلة:</label>
+        <select id="add-ship"></select>
+
+        <label>الحالة:</label>
+        <select id="add-status"></select>
+
+        <label>تاريخ الالتحاق:</label>
+        <input type="date" id="add-joinDate">
+
+        <label>تاريخ النزول:</label>
+        <input type="date" id="add-leaveDate">
+
+        <label>الملاحظات:</label>
+        <textarea id="add-note"></textarea>
+
+        <button onclick="saveNewCrewMember()">💾 حفظ</button>
+    </div>
+</div>
+
+<!-- ✅ نافذة التعديل (Modal) -->
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeEditModal()">&times;</span>
+        <h2>تعديل الموظف</h2>
+
+        <label>الاسم:</label>
+        <input type="text" id="edit-name">
+
+        <label>الرتبة:</label>
+        <select id="edit-rank"></select>
+
+        <label>الناقلة:</label>
+        <select id="edit-ship"></select>
+
+        <label>الحالة:</label>
+        <select id="edit-status"></select>
+
+        <label>تاريخ الالتحاق:</label>
+        <input type="date" id="edit-joinDate">
+
+        <label>تاريخ النزول:</label>
+        <input type="date" id="edit-leaveDate">
+
+        <label>الملاحظات:</label>
+        <textarea id="edit-note"></textarea>
+
+        <button onclick="saveEditCrewMember()">💾 حفظ</button>
+    </div>
+</div>
+
+<table class="summary-table-print" style="display: none;">
+    <thead>
+        <tr>
+            <th>الرتبة</th>
+            <th>العدد</th>
+        </tr>
+    </thead>
+    <tbody id="summary-print-body">
+        <!-- ✅ سيتم تعبئته ديناميكيًا أثناء الطباعة -->
+    </tbody>
+</table>
+
+    <script src="script.js"></script>
+</body>
+</html>
