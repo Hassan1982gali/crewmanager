@@ -194,16 +194,33 @@ tr:hover {
     gap: 10px;
 }
 
-/* ✅ تصغير المدخلات */
-.modal input,
-.modal select,
-.modal textarea {
-    padding: 8px;
-    width: 100%;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    font-size: 14px;
+.modal-content table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: center;
 }
+
+.modal-content th, .modal-content td {
+  padding: 8px;
+  border: 1px solid #ccc;
+}
+.modal-content th {
+  background-color: #f2f2f2;
+}
+#seaTimeModal .modal-content th {
+  background-color: #e3f2fd;  /* لون سماوي فاتح */
+  color: #0d47a1;              /* خط أزرق غامق */
+  padding: 10px;
+  font-weight: bold;
+  border-bottom: 1px solid #ccc;
+  text-align: center;
+}
+
+<div style="text-align: center; margin-top: 20px;">
+  <button onclick="printSeaTime()" style="padding: 8px 16px;">🖨️ طباعة السجل</button>
+</div>
+
+</style>
 
 /* ✅ تنسيق زر الحفظ */
 .modal button {

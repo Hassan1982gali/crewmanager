@@ -6,6 +6,7 @@
     <title>ادارة طواقم شركة ناقلات النفط العراقية</title>
 <button class="logout-button" onclick="logout()">🚪 تسجيل الخروج</button>
     <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
     <style>
 @media print {
@@ -101,6 +102,8 @@
 
     <button class="print-button" onclick="printFilteredData()">🖨️ طباعة</button>
     <button class="add-button" onclick="showAddModal()">➕ إضافة موظف</button>
+    <button onclick="showAddHistoryModal()">🕓 إضافة سجل قديم</button>
+    <button onclick="exportFilteredToExcel()" style="margin: 10px 0;">📥 تصدير البيانات إلى Excel</button>
 
     <div class="search-container">
         <input type="text" id="search-input" placeholder="🔍 ابحث عن اسم..." onkeyup="searchByName()">
@@ -156,6 +159,34 @@
     </div>
 </div>
 
+<!-- ✅ نافذة إدخال سجل قديم -->
+<div id="addHistoryModal" class="modal" style="display: none;">
+  <div class="modal-content">
+    <span class="close" onclick="closeAddHistoryModal()" style="float: left; cursor: pointer;">&times;</span>
+    <h2 style="text-align: center;">➕ إضافة سجل Sea Time قديم</h2>
+
+    <label>اختر الموظف:</label>
+    <select id="history-employee"></select>
+
+    <label>الناقلة:</label>
+    <input type="text" id="history-ship">
+
+    <label>الحالة:</label>
+    <input type="text" id="history-status">
+
+    <label>تاريخ الصعود:</label>
+    <input type="date" id="history-joinDate">
+
+    <label>تاريخ النزول:</label>
+    <input type="date" id="history-leaveDate">
+
+    <label>الرتبة:</label>
+    <input type="text" id="history-rank">
+
+    <button onclick="saveHistoryRecord()">💾 حفظ السجل</button>
+  </div>
+</div>
+
 <!-- ✅ نافذة التعديل (Modal) -->
 <div id="editModal" class="modal">
     <div class="modal-content">
@@ -198,6 +229,33 @@
         <!-- ✅ سيتم تعبئته ديناميكيًا أثناء الطباعة -->
     </tbody>
 </table>
+
+<!-- ✅ نافذة عرض Sea Time -->
+<div id="seaTimeModal" class="modal" style="display: none;">
+  <div class="modal-content">
+    <span class="close" onclick="closeSeaTimeModal()" style="float: left; cursor: pointer;">&times;</span>
+    <h2 style="text-align: center;">📄 سجل الخدمة البحرية (Sea Time)</h2>
+    <table id="seaTimeTable" style="width: 100%; border-collapse: collapse; margin-top: 15px; text-align: center;">
+<thead>
+  <tr>
+    <th>الناقلة</th>
+    <th>الحالة</th>
+    <th>من تاريخ</th>
+    <th>إلى تاريخ</th>
+    <th>المدة</th>
+    <th>الرتبة</th>
+    <th>إجراء</th>
+  </tr>
+</thead>
+      <tbody id="seaTimeTableBody">
+        <!-- سيتم تعبئة السجل هنا -->
+      </tbody>
+    </table>
+<div style="text-align: center; margin-top: 20px;">
+  <button onclick="printSeaTime()" style="padding: 8px 16px;">🖨️ طباعة السجل</button>
+</div>
+  </div>
+</div>
 
     <script src="script.js"></script>
 </body>
