@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ملف الموظف البحري</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Cairo', sans-serif;
+      padding: 20px;
+      background-color: #f0f4f8;
+      direction: rtl;
+    }
+    h2 {
+      text-align: center;
+      color: #1a237e;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      text-align: center;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+    }
+    th {
+      background: #90caf9;
+      color: #0d47a1;
+    }
+    .section {
+      background: #fff;
+      padding: 20px;
+      margin-bottom: 30px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .form-inline {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+    .form-inline input {
+      padding: 5px;
+      flex: 1;
+    }
+    .form-inline button {
+      padding: 6px 20px;
+      background-color: #1a237e;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 6px;
+    }
+    .actions button {
+      margin: 2px;
+      padding: 4px 10px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .actions .edit {
+      background-color: #ffb300;
+      color: white;
+    }
+    .actions .delete {
+      background-color: #d32f2f;
+      color: white;
+    }
+    @media print {
+  .print-buttons {
+    display: none;
+  }
+}
+  </style>
+</head>
+<body>
+  <h2>📋 ملف الموظف البحري</h2>
+
+  <div style="text-align: center; margin-bottom: 20px;">
+    <a href="export-certificates.html" target="_blank">
+      <button style="padding: 10px 30px; background-color: #0d47a1; color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer;">
+        📥 تصدير شهادات الطاقم
+      </button>
+    </a>
+  </div>  
+
+  <div class="print-buttons">
+    <button onclick="window.print()">🖨️ طباعة الملف الكامل</button>
+  </div>  
+
+  <div class="section">
+    <p><strong>👤 الاسم:</strong> <span id="profile-name">---</span></p>
+    <p><strong>🎖️ الرتبة:</strong> <span id="profile-rank">---</span></p>
+    <p><strong>⚓ الحالة:</strong> <span id="profile-status">---</span></p>
+    <p><strong>⛴️ الناقلة:</strong> <span id="profile-ship">---</span></p>
+  </div>
+
+  <div class="section">
+    <h3>🎓 الشهادات البحرية</h3>
+
+    <div class="form-inline">
+      <input type="text" id="cert-name" placeholder="اسم الشهادة">
+      <input type="date" id="cert-issue" placeholder="تاريخ الإصدار">
+      <input type="date" id="cert-expiry" placeholder="تاريخ النفاذ">
+      <button onclick="addCertificate()">➕ إضافة شهادة</button>
+    </div>
+
+    <table>
+      <thead>
+        <tr><th>اسم الشهادة</th><th>تاريخ الإصدار</th><th>تاريخ النفاذ</th><th>إجراءات</th></tr>
+      </thead>
+      <tbody id="certificateTableBody"></tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <h3>🧭 ملخص Sea Time</h3>
+    <p>عدد التنقلات: <span id="sea-moves">0</span></p>
+    <p>إجمالي الأيام في البحر: <span id="sea-total-days">0</span> يوم</p>
+  </div>
+
+  <div class="section">
+    <h3>📅  سجل الخدمة البحرية</h3>
+    <div class="form-inline">
+      <input type="text" id="service-ship" placeholder="الناقلة">
+      <input type="text" id="service-status" placeholder="الحالة">
+      <input type="date" id="service-join" placeholder="من تاريخ">
+      <input type="date" id="service-leave" placeholder="إلى تاريخ">
+      <input type="text" id="service-rank" placeholder="الرتبة">
+      <button onclick="addServiceEntry()">➕ إضافة خدمة</button>
+    </div>    
+    <table>
+      <thead>
+        <tr>
+          <th>الناقلة</th><th>الحالة</th><th>من تاريخ</th><th>إلى تاريخ</th><th>المدة</th><th>الرتبة</th><th>إجراءات</th>
+        </tr>
+      </thead>
+      <tbody id="seaTimeProfileBody"></tbody>
+    </table>
+  </div>
+  
+  <script>
+    const SUPABASE_URL = "https://hhglsrugbayccdboasaj.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhoZ2xzcnVnYmF5Y2NkYm9hc2FqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI5NTEzMDIsImV4cCI6MjA1ODUyNzMwMn0._wHDCT00aa4IQYJNzpL4hjcz9BURslqJt9OUtfxjxlM";
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const employeeId = urlParams.get("id");
+
+    async function loadEmployeeProfile() {
+    if (!employeeId) return;
+
+    const { data: crew } = await supabase.from("crew_list").select("*").eq("id", employeeId).single();
+    if (crew) {
+      document.getElementById("profile-name").textContent = crew.name;
+      document.getElementById("profile-rank").textContent = crew.rank;
+      document.getElementById("profile-status").textContent = crew.status;
+      document.getElementById("profile-ship").textContent = crew.ship;
+    }
+
+    const { data: history } = await supabase.from("history").select("*").eq("employee_id", employeeId);
+    let totalDays = 0;
+    document.getElementById("seaTimeProfileBody").innerHTML = history.map(entry => {
+      totalDays += entry.duration;
+      return `<tr>
+        <td contenteditable="false">${entry.ship}</td>
+        <td contenteditable="false">${entry.status}</td>
+        <td contenteditable="false">${entry.join_date}</td>
+        <td contenteditable="false">${entry.leave_date}</td>
+        <td contenteditable="false">${entry.duration}</td>
+        <td contenteditable="false">${entry.rank}</td>
+        <td class="actions">
+          <button class="edit" onclick="editServiceEntry(this, '${entry.id}')">✏️</button>
+          <button class="delete" onclick="deleteServiceEntry('${entry.id}')">🗑️</button>
+        </td>
+      </tr>`;
+    }).join('');
+
+    document.getElementById("sea-moves").textContent = history.length;
+    document.getElementById("sea-total-days").textContent = totalDays;
+
+    loadCertificates();
+  }
+
+  async function deleteServiceEntry(id) {
+    if (!confirm("هل أنت متأكد من حذف هذه الخدمة؟")) return;
+    await supabase.from("history").delete().eq("id", id);
+    loadEmployeeProfile();
+  }
+
+  async function editServiceEntry(button, id) {
+    const row = button.closest("tr");
+    const cells = row.querySelectorAll("td");
+    const [shipCell, statusCell, joinCell, leaveCell, durationCell, rankCell] = cells;
+
+    if (button.textContent.includes("✏️")) {
+      shipCell.contentEditable = statusCell.contentEditable = joinCell.contentEditable = leaveCell.contentEditable = durationCell.contentEditable = rankCell.contentEditable = true;
+      shipCell.focus();
+      button.textContent = "💾";
+      button.classList.remove("edit");
+    } else {
+      shipCell.contentEditable = statusCell.contentEditable = joinCell.contentEditable = leaveCell.contentEditable = durationCell.contentEditable = rankCell.contentEditable = false;
+      button.textContent = "✏️";
+      button.classList.add("edit");
+
+      const { error } = await supabase.from("history").update({
+        ship: shipCell.textContent.trim(),
+        status: statusCell.textContent.trim(),
+        join_date: joinCell.textContent.trim(),
+        leave_date: leaveCell.textContent.trim(),
+        duration: calculateDuration(joinCell.textContent.trim(), leaveCell.textContent.trim()),
+        rank: rankCell.textContent.trim()
+      }).eq("id", id);
+
+      if (error) alert("فشل التعديل: " + error.message);
+      else loadEmployeeProfile();
+    }
+  }
+
+    async function loadCertificates() {
+  const { data: certs } = await supabase.from("certificates").select("*").eq("employee_id", employeeId);
+  const today = new Date();
+
+  document.getElementById("certificateTableBody").innerHTML = certs.map(cert => {
+    let bgColor = "";
+    let expiryDisplay = cert.expiry_date;
+
+    if (cert.expiry_date) {
+      const expiry = new Date(cert.expiry_date);
+      const diffDays = Math.floor((expiry - today) / (1000 * 60 * 60 * 24));
+
+      if (!isNaN(diffDays)) {
+        if (diffDays < 0) {
+          bgColor = "background-color: #fff9c4;";
+        } else if (diffDays <= 60) {
+          bgColor = "background-color: #ffcdd2;";
+        }
+      }
+    }
+
+    return `<tr>
+      <td contenteditable="false">${cert.name}</td>
+      <td contenteditable="false">${cert.issue_date || ""}</td>
+      <td contenteditable="false" style="${bgColor}">${expiryDisplay || ""}</td>
+      <td class="actions">
+        <button class="edit" onclick="editCertificate(this, '${cert.id}')">✏️</button>
+        <button class="delete" onclick="deleteCertificate('${cert.id}')">🗑️</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+    async function addCertificate() {
+      const name = document.getElementById("cert-name").value.trim();
+      const issue = document.getElementById("cert-issue").value;
+      const expiry = document.getElementById("cert-expiry").value;
+      if (!name || !issue || !expiry) {
+        alert("يرجى ملء جميع الحقول");
+        return;
+      }
+
+      const { error } = await supabase.from("certificates").insert({
+        employee_id: employeeId,
+        name,
+        issue_date: issue,
+        expiry_date: expiry
+      });
+
+      if (error) {
+        alert("حدث خطأ أثناء الحفظ: " + error.message);
+      } else {
+        document.getElementById("cert-name").value = "";
+        document.getElementById("cert-issue").value = "";
+        document.getElementById("cert-expiry").value = "";
+        loadCertificates();
+      }
+    }
+
+    async function deleteCertificate(id) {
+      if (!confirm("هل أنت متأكد من حذف هذه الشهادة؟")) return;
+      await supabase.from("certificates").delete().eq("id", id);
+      loadCertificates();
+    }
+
+    function calculateDuration(startDateStr, endDateStr) {
+  const start = new Date(startDateStr);
+  const end = new Date(endDateStr);
+  if (isNaN(start) || isNaN(end)) return 0;
+
+  const diffTime = end - start;
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays > 0 ? diffDays : 0;
+}
+
+    async function editCertificate(button, id) {
+      const row = button.closest("tr");
+      const cells = row.querySelectorAll("td");
+      const nameCell = cells[0];
+      const issueCell = cells[1];
+      const expiryCell = cells[2];
+
+      if (button.textContent.includes("✏️")) {
+        nameCell.contentEditable = issueCell.contentEditable = expiryCell.contentEditable = true;
+        nameCell.focus();
+        button.textContent = "💾";
+        button.classList.remove("edit");
+      } else {
+        nameCell.contentEditable = issueCell.contentEditable = expiryCell.contentEditable = false;
+        button.textContent = "✏️";
+        button.classList.add("edit");
+
+        const { error } = await supabase.from("certificates").update({
+          name: nameCell.textContent.trim(),
+          issue_date: issueCell.textContent.trim(),
+          expiry_date: expiryCell.textContent.trim()
+        }).eq("id", id);
+
+        if (error) {
+  alert("فشل التعديل: " + error.message);
+} else {
+  loadCertificates();
+}
+      }
+    }
+
+    async function addServiceEntry() {
+  const ship = document.getElementById("service-ship").value.trim();
+  const status = document.getElementById("service-status").value.trim();
+  const join_date = document.getElementById("service-join").value;
+  const leave_date = document.getElementById("service-leave").value;
+  const rank = document.getElementById("service-rank").value.trim();
+
+  if (!ship || !status || !join_date || !leave_date || !rank) {
+    alert("يرجى ملء جميع الحقول");
+    return;
+  }
+
+  const duration = calculateDuration(join_date, leave_date);
+
+  const { error } = await supabase.from("history").insert({
+    employee_id: employeeId,
+    ship,
+    status,
+    join_date,
+    leave_date,
+    duration,
+    rank
+  });
+
+  if (error) {
+    alert("فشل في إضافة الخدمة: " + error.message);
+  } else {
+    // نفرّغ الحقول بعد الإضافة
+    document.getElementById("service-ship").value = "";
+    document.getElementById("service-status").value = "";
+    document.getElementById("service-join").value = "";
+    document.getElementById("service-leave").value = "";
+    document.getElementById("service-rank").value = "";
+    loadEmployeeProfile();
+  }
+}
+
+    document.addEventListener("DOMContentLoaded", loadEmployeeProfile);
+  </script>
+</body>
+</html>

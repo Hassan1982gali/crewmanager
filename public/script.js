@@ -165,6 +165,40 @@ async function loadEmployees(callback = null) {
     if (callback) callback();
 }
 
+async function addCertificate() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const employeeId = urlParams.get("id");
+  
+    const name = document.getElementById("cert-name").value.trim();
+    const issue = document.getElementById("cert-issue").value;
+    const expiry = document.getElementById("cert-expiry").value;
+  
+    if (!name || !issue || !expiry) {
+      alert("⚠️ الرجاء ملء جميع الحقول.");
+      return;
+    }
+  
+    const { error } = await supabase.from("certificates").insert([{
+      employee_id: employeeId,
+      name,
+      issue_date: issue,
+      expiry_date: expiry
+    }]);
+  
+    if (error) {
+      alert("❌ حدث خطأ أثناء إضافة الشهادة.");
+      console.error(error);
+      return;
+    }
+  
+    // ✅ إعادة تحميل الشهادات
+    alert("✅ تم حفظ الشهادة.");
+    document.getElementById("cert-name").value = "";
+    document.getElementById("cert-issue").value = "";
+    document.getElementById("cert-expiry").value = "";
+    loadCertificates(employeeId); // تأكد الدالة موجودة وتعاد تحميل البيانات
+  }  
+
 async function showAddHistoryModal() {
     document.getElementById("addHistoryModal").style.display = "block";
 
@@ -359,6 +393,7 @@ function displayEmployees(employees) {
   <button onclick="editCrewMember('${crew.id}')">✏ تعديل</button>
   <button onclick="deleteCrewMember('${crew.id}')">🗑 حذف</button>
   <button onclick="showSeaTime('${crew.id}')">📄 السجل</button>
+  <button onclick="showEmployeeProfile('${crew.id}')">📋 ملف الموظف</button>
 </td>
             </td>
         `;
@@ -1175,6 +1210,75 @@ function printSeaTime() {
   printWindow.print();
 }
 
+function printCertificates() {
+    const name = document.getElementById("profile-name").textContent;
+    const certTable = document.querySelector("#certificateTableBody").innerHTML;
+  
+    const printWindow = window.open("", "", "width=900,height=700");
+    printWindow.document.write(`
+      <html><head><title>طباعة الشهادات</title>
+      <style>
+        body { font-family: Arial; direction: rtl; padding: 20px; }
+        h2 { text-align: center; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #000; padding: 8px; text-align: center; }
+        th { background-color: #dcedc8; }
+      </style>
+      </head><body>
+      <h2>📄 شهادات الموظف</h2>
+      <p>👤 الاسم: <strong>${name}</strong></p>
+      <table>
+        <thead>
+          <tr>
+            <th>اسم الشهادة</th>
+            <th>تاريخ الإصدار</th>
+            <th>تاريخ النفاذ</th>
+          </tr>
+        </thead>
+        <tbody>${certTable}</tbody>
+      </table>
+      </body></html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+  }
+  
+  function printSeaService() {
+    const name = document.getElementById("profile-name").textContent;
+    const seaTable = document.querySelector("#seaTimeProfileBody").innerHTML;
+  
+    const printWindow = window.open("", "", "width=900,height=700");
+    printWindow.document.write(`
+      <html><head><title>طباعة الخدمة البحرية</title>
+      <style>
+        body { font-family: Arial; direction: rtl; padding: 20px; }
+        h2 { text-align: center; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #000; padding: 8px; text-align: center; }
+        th { background-color: #bbdefb; }
+      </style>
+      </head><body>
+      <h2>📄 سجل الخدمة البحرية</h2>
+      <p>👤 الاسم: <strong>${name}</strong></p>
+      <table>
+        <thead>
+          <tr>
+            <th>الناقلة</th>
+            <th>الحالة</th>
+            <th>من تاريخ</th>
+            <th>إلى تاريخ</th>
+            <th>المدة</th>
+            <th>الرتبة</th>
+          </tr>
+        </thead>
+        <tbody>${seaTable}</tbody>
+      </table>
+      </body></html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+  }  
+
 function updateSummaryTable() {
     let summaryBody = document.getElementById("summary-body");
     let rows = Array.from(document.querySelectorAll("#employee-table-body tr"))
@@ -1248,6 +1352,12 @@ function exportFilteredToExcel() {
 
   XLSX.writeFile(workbook, "crew_list_backup.xlsx");
 }
+
+function showEmployeeProfile(id) {
+    window.open(`employee-profile.html?id=${id}`, "_blank", "width=1000,height=700");
+  }
+  
+  window.showEmployeeProfile = showEmployeeProfile;  
 
 // ✅ فرز البيانات حسب مدة النزول (تصاعدي / تنازلي)
 function sortByLeaveDuration(order) {
