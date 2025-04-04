@@ -51,15 +51,70 @@
       border: 1px solid #ccc;
       border-radius: 6px;
     }
+    .filters-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .filter-group {
+      flex: 1;
+      min-width: 180px;
+    }
+    .dropdown-button {
+      background-color: #1a237e;
+      color: white;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      width: 100%;
+    }
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      background-color: white;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      border-radius: 10px;
+      padding: 10px;
+      max-height: 300px;
+      overflow-y: auto;
+      z-index: 1000;
+    }
+    .dropdown-content.active {
+      display: block;
+    }
+    .filter-search {
+      width: 100%;
+      padding: 6px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
   </style>
 </head>
 <body>
-  <h2>📤 تصدير شهادات الطاقم</h2>
+  <h2>📄 تصدير شهادات الطاقم</h2>
   <div class="export-all">
-    <button onclick="exportAllCertificates()">📥 تصدير كل الشهادات</button>
+    <button onclick="exportAllCertificates()">📅 تصدير كل الشهادات</button>
   </div>
 
-  <input type="text" id="searchInput" placeholder="🔎 ابحث عن اسم الموظف..." oninput="filterTable()">
+  <input type="text" id="searchInput" placeholder="🔎 ابحث عن اسم الموظف..." oninput="applyFilters()">
+
+  <div class="filters-container">
+    <div class="filter-group">
+      <button class="dropdown-button" onclick="toggleDropdown('rank-filter')">🎖 الرتبة</button>
+      <div id="rank-filter" class="dropdown-content"></div>
+    </div>
+    <div class="filter-group">
+      <button class="dropdown-button" onclick="toggleDropdown('ship-filter')">🚢 الناقلة</button>
+      <div id="ship-filter" class="dropdown-content"></div>
+    </div>
+    <div class="filter-group">
+      <button class="dropdown-button" onclick="toggleDropdown('status-filter')">⚪ الحالة</button>
+      <div id="status-filter" class="dropdown-content"></div>
+    </div>
+  </div>
 
   <table>
     <thead>
@@ -83,6 +138,67 @@
       const { data: crew } = await client.from("crew_list").select("*");
       allCrew = crew || [];
       renderCrewTable(allCrew);
+      populateFilter("rank-filter", [...new Set(allCrew.map(c => c.rank))]);
+      populateFilter("ship-filter", [...new Set(allCrew.map(c => c.ship || 'استراحة'))]);
+      populateFilter("status-filter", [...new Set(allCrew.map(c => c.status))]);
+    }
+
+    function populateFilter(containerId, values) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      container.innerHTML = '<input type="text" class="filter-search" placeholder="🔍 بحث..." onkeyup="filterDropdown(\'' + containerId + '\', this)">';
+      values.forEach(val => {
+        const id = `${containerId}-${val}`;
+        container.innerHTML += `
+          <div>
+            <input type="checkbox" id="${id}" value="${val}" onchange="applyFilters()">
+            <label for="${id}">${val}</label>
+          </div>
+        `;
+      });
+    }
+
+    function filterDropdown(containerId, input) {
+      const value = input.value.toLowerCase();
+      const container = document.getElementById(containerId);
+      const divs = container.querySelectorAll('div');
+      divs.forEach(div => {
+        if (div.textContent.toLowerCase().includes(value)) {
+          div.style.display = '';
+        } else {
+          div.style.display = 'none';
+        }
+      });
+    }
+
+    function applyFilters() {
+      const nameSearch = document.getElementById("searchInput").value.toLowerCase();
+
+      const selectedRanks = getCheckedValues("rank-filter");
+      const selectedShips = getCheckedValues("ship-filter");
+      const selectedStatus = getCheckedValues("status-filter");
+
+      const filtered = allCrew.filter(c => {
+        const matchName = c.name.toLowerCase().includes(nameSearch);
+        const matchRank = selectedRanks.length ? selectedRanks.includes(c.rank) : true;
+        const matchShip = selectedShips.length ? selectedShips.includes(c.ship || 'استراحة') : true;
+        const matchStatus = selectedStatus.length ? selectedStatus.includes(c.status) : true;
+        return matchName && matchRank && matchShip && matchStatus;
+      });
+
+      renderCrewTable(filtered);
+    }
+
+    function getCheckedValues(containerId) {
+      const checked = document.querySelectorAll(`#${containerId} input[type='checkbox']:checked`);
+      return Array.from(checked).map(cb => cb.value);
+    }
+
+    function toggleDropdown(id) {
+      document.querySelectorAll('.dropdown-content').forEach(el => {
+        if (el.id !== id) el.classList.remove('active');
+      });
+      document.getElementById(id).classList.toggle('active');
     }
 
     function renderCrewTable(data) {
@@ -92,15 +208,9 @@
           <td>${c.name}</td>
           <td>${c.rank}</td>
           <td>${c.status}</td>
-          <td><button onclick="exportCertificates('${c.id}', '${c.name}')">📥 تصدير</button></td>
+          <td><button onclick="exportCertificates('${c.id}', '${c.name}')">📅 تصدير</button></td>
         </tr>
       `).join('');
-    }
-
-    function filterTable() {
-      const keyword = document.getElementById("searchInput").value.toLowerCase();
-      const filtered = allCrew.filter(c => c.name.toLowerCase().includes(keyword));
-      renderCrewTable(filtered);
     }
 
     async function exportCertificates(employeeId, name) {
@@ -129,9 +239,17 @@
     }
 
     async function exportAllCertificates() {
-      const { data: crew } = await client.from("crew_list").select("*");
-      for (const member of crew) {
-        await exportCertificates(member.id, member.name);
+      const rows = document.querySelectorAll("#crewTableBody tr");
+      for (const row of rows) {
+        const name = row.cells[0]?.textContent.trim();
+        const exportButton = row.querySelector("button");
+        if (exportButton) {
+          const idMatch = exportButton.getAttribute("onclick").match(/'(.*?)'/);
+          const id = idMatch ? idMatch[1] : null;
+          if (id && name) {
+            await exportCertificates(id, name);
+          }
+        }
       }
     }
 
