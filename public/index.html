@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ادارة طواقم شركة ناقلات النفط العراقية</title>
-<button class="logout-button" onclick="logout()">🚪 تسجيل الخروج</button>
+    <button class="utility-btn btn-logout" onclick="logout()">🚪 تسجيل الخروج</button>
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
@@ -14,6 +14,37 @@
     table:not(.summary-table) td:last-child { /* ✅ التأكد من عدم إخفاء أي أعمدة من السمري */
         display: none;
     }
+}
+
+.action-btn {
+  padding: 6px 10px;
+  margin: 2px;
+  font-size: 13px;
+  border: none;
+  border-radius: 10px;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.btn-edit {
+  background-color: #2196F3;
+}
+
+.btn-delete {
+  background-color: #f44336;
+}
+
+.btn-history {
+  background-color: #ff9800;
+}
+
+.btn-profile {
+  background-color: #4CAF50;
+}
+
+.action-btn:hover {
+  opacity: 0.85;
 }
 /* ✅ تحسين تنسيق الطباعة */
 @media print {
@@ -35,6 +66,257 @@
         display: none; /* ❌ يخفي الملخص من الصفحة الرئيسية أثناء الطباعة */
     }
 }
+.utility-btn {
+  padding: 8px 14px;
+  margin: 5px 4px;
+  font-size: 14px;
+  border: none;
+  border-radius: 12px;
+  color: white;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.btn-print {
+  background-color: #6a1b9a;
+}
+
+.btn-add {
+  background-color: #00796B;
+}
+
+.btn-history {
+  background-color: #ff9800;
+}
+
+.btn-export {
+  background-color: #0277bd;
+}
+
+.btn-logout {
+  background-color: #b71c1c;
+}
+
+.utility-btn:hover {
+  opacity: 0.85;
+}
+.modal-content {
+  background-color: #ffffff;
+  padding: 30px;
+  border-radius: 16px;
+  max-width: 600px;
+  margin: auto;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.modal-content h2 {
+  margin-bottom: 20px;
+  color: #1a237e;
+  text-align: center;
+}
+
+.modal-content label {
+  display: block;
+  margin-top: 15px;
+  margin-bottom: 5px;
+  color: #333;
+  font-weight: bold;
+}
+
+.modal-content input,
+.modal-content select,
+.modal-content textarea {
+  width: 100%;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  box-sizing: border-box;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.modal-content button {
+  background-color: #1a237e;
+  color: white;
+  padding: 10px 20px;
+  margin-top: 15px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 15px;
+  transition: background-color 0.3s ease;
+}
+
+.modal-content button:hover {
+  background-color: #3949ab;
+}
+
+.modal-content .close {
+  float: left;
+  font-size: 24px;
+  color: #555;
+  cursor: pointer;
+}
+.modal-content {
+  background-color: #f1f8ff; /* لون أزرق هادئ */
+  padding: 30px;
+  border-radius: 20px;
+  max-width: 700px; /* ✅ عرض أكبر */
+  margin: auto;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  font-family: 'Segoe UI', sans-serif;
+  transition: all 0.3s ease-in-out;
+}
+
+.modal-content h2 {
+  margin-bottom: 20px;
+  color: #0d47a1;
+  text-align: center;
+}
+
+.modal-content label {
+  display: block;
+  margin-top: 15px;
+  margin-bottom: 5px;
+  color: #333;
+  font-weight: 600;
+}
+
+.modal-content input,
+.modal-content select,
+.modal-content textarea {
+  width: 100%;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid #b0bec5;
+  box-sizing: border-box;
+  font-size: 14px;
+  margin-bottom: 12px;
+  background-color: #ffffff;
+}
+
+.modal-content button {
+  background-color: #0d47a1;
+  color: white;
+  padding: 12px 24px;
+  margin-top: 15px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: 0.3s;
+}
+
+.modal-content button:hover {
+  background-color: #1565c0;
+}
+
+.modal-content .close {
+  float: left;
+  font-size: 26px;
+  color: #555;
+  cursor: pointer;
+  font-weight: bold;
+}
+#seaTimeModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  box-sizing: border-box;
+  direction: rtl; /* ✅ لدعم اللغة العربية */
+}
+
+#seaTimeModal .modal-content {
+  width: 95%;
+  max-width: 1000px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background-color: #f1f8ff;
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  direction: rtl; /* ✅ لضبط اتجاه المحتوى */
+  text-align: right;
+}
+
+/* ✅ تنسيق الجدول */
+#seaTimeTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  text-align: center;
+}
+
+#seaTimeTable th {
+  background-color: #bbdefb;
+  color: #0d47a1;
+  padding: 10px;
+  font-size: 15px;
+}
+
+#seaTimeTable td {
+  padding: 8px;
+  border-bottom: 1px solid #ccc;
+  font-size: 14px;
+}
+
+/* ✅ زر طباعة السجل */
+#seaTimeModal button {
+  background-color: #1a237e;
+  color: white;
+  padding: 10px 20px;
+  margin-top: 20px;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+#seaTimeModal button:hover {
+  background-color: #3949ab;
+}
+
+.dropdown-button {
+  background-color: #1a237e;
+  color: white;
+  padding: 10px 18px;
+  font-size: 14px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: 0.3s;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+  min-width: 160px;
+}
+
+.dropdown-button:hover {
+  background-color: #3949ab;
+}
+
+.dropdown-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.dropdown-content.active {
+  display: block; /* ✅ تضمن إن المحتوى مرئي وقابل للتفاعل */
+  max-height: 1000px;
+  opacity: 1;
+  pointer-events: auto;
+}
     </style>
 </head>
 <body>
@@ -53,57 +335,60 @@
         </tbody>
     </table>
 
-    <div class="filters-container">
-        <div class="filter-group">
-            <label>🎖 اختر الرتبة:</label>
-            <div class="dropdown">
-                <button class="dropdown-button" onclick="toggleDropdown('ranks-dropdown')">🎖 الرتب</button>
-                <div id="ranks-dropdown" class="dropdown-content">
-                    <input type="text" class="filter-search" placeholder="🔍 بحث..." onkeyup="filterDropdown('ranks-container', this)">
-                    <div id="ranks-container" class="checkbox-list"></div>
-                    <div class="dropdown-buttons">
-                        <button onclick="applyFilters()">OK</button>
-                        <button onclick="clearFilters('ranks-container')">Cancel</button>
-                    </div>
-                </div>
+    <div class="filters-container" style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 20px;">
+      <!-- 🎖️ الرتب -->
+      <div class="filter-group">
+        <label>🎖 اختر الرتبة:</label>
+        <div class="dropdown">
+          <button id="ranks-button" class="dropdown-button" onclick="toggleDropdown('ranks-dropdown')">🎖 الرتب ⬇</button>
+          <div id="ranks-dropdown" class="dropdown-content">
+            <input type="text" class="filter-search" placeholder="🔍 بحث..." onkeyup="filterDropdown('ranks-container', this)">
+            <div id="ranks-container" class="checkbox-list"></div>
+            <div class="dropdown-buttons">
+              <button onclick="applyFilters()">OK</button>
+              <button onclick="clearFilters('ranks-container')">Cancel</button>
             </div>
+          </div>
         </div>
-
-        <div class="filter-group">
-            <label>🚢 اختر الناقلة:</label>
-            <div class="dropdown">
-                <button class="dropdown-button" onclick="toggleDropdown('ships-dropdown')">🚢 الناقلات</button>
-                <div id="ships-dropdown" class="dropdown-content">
-                    <input type="text" class="filter-search" placeholder="🔍 بحث..." onkeyup="filterDropdown('ships-container', this)">
-                    <div id="ships-container" class="checkbox-list"></div>
-                    <div class="dropdown-buttons">
-                        <button onclick="applyFilters()">OK</button>
-                        <button onclick="clearFilters('ships-container')">Cancel</button>
-                    </div>
-                </div>
+      </div>
+    
+      <!-- 🚢 الناقلات -->
+      <div class="filter-group">
+        <label>🚢 اختر الناقلة:</label>
+        <div class="dropdown">
+          <button id="ships-button" class="dropdown-button" onclick="toggleDropdown('ships-dropdown')">🚢 الناقلات ⬇</button>
+          <div id="ships-dropdown" class="dropdown-content">
+            <input type="text" class="filter-search" placeholder="🔍 بحث..." onkeyup="filterDropdown('ships-container', this)">
+            <div id="ships-container" class="checkbox-list"></div>
+            <div class="dropdown-buttons">
+              <button onclick="applyFilters()">OK</button>
+              <button onclick="clearFilters('ships-container')">Cancel</button>
             </div>
+          </div>
         </div>
-
-        <div class="filter-group">
-            <label>🟢 حالة الموظف:</label>
-            <div class="dropdown">
-                <button class="dropdown-button" onclick="toggleDropdown('status-dropdown')">🟢 الحالات</button>
-                <div id="status-dropdown" class="dropdown-content">
-                    <input type="text" class="filter-search" placeholder="🔍 بحث..." onkeyup="filterDropdown('status-container', this)">
-                    <div id="status-container" class="checkbox-list"></div>
-                    <div class="dropdown-buttons">
-                        <button onclick="applyFilters()">OK</button>
-                        <button onclick="clearFilters('status-container')">Cancel</button>
-                    </div>
-                </div>
+      </div>
+    
+      <!-- 🟢 الحالات -->
+      <div class="filter-group">
+        <label>🟢 حالة الموظف:</label>
+        <div class="dropdown">
+          <button id="status-button" class="dropdown-button" onclick="toggleDropdown('status-dropdown')">🟢 الحالات ⬇</button>
+          <div id="status-dropdown" class="dropdown-content">
+            <input type="text" class="filter-search" placeholder="🔍 بحث..." onkeyup="filterDropdown('status-container', this)">
+            <div id="status-container" class="checkbox-list"></div>
+            <div class="dropdown-buttons">
+              <button onclick="applyFilters()">OK</button>
+              <button onclick="clearFilters('status-container')">Cancel</button>
             </div>
+          </div>
         </div>
-    </div>
+      </div>
+    </div>    
 
-    <button class="print-button" onclick="printFilteredData()">🖨️ طباعة</button>
-    <button class="add-button" onclick="showAddModal()">➕ إضافة موظف</button>
-    <button onclick="showAddHistoryModal()">🕓 إضافة سجل قديم</button>
-    <button onclick="exportFilteredToExcel()" style="margin: 10px 0;">📥 تصدير البيانات إلى Excel</button>
+    <button class="utility-btn btn-print" onclick="printFilteredData()">🖨️ طباعة</button>
+<button class="utility-btn btn-add" onclick="showAddModal()">➕ إضافة موظف</button>
+<button class="utility-btn btn-history" onclick="showAddHistoryModal()">🕓 إضافة سجل قديم</button>
+<button class="utility-btn btn-export" onclick="exportFilteredToExcel()">📥 تصدير البيانات إلى Excel</button>
 
     <div class="search-container">
         <input type="text" id="search-input" placeholder="🔍 ابحث عن اسم..." onkeyup="searchByName()">
@@ -113,7 +398,7 @@
         <thead>
             <tr>
                 <th>#</th>
-                <th>الاسم</th>
+                <th onclick="sortByName()" style="cursor: pointer;">الاسم ⬍</th>
                 <th>الرتبة</th>
                 <th>الناقلة</th>
                 <th>تاريخ الالتحاق</th>
@@ -231,29 +516,76 @@
 </table>
 
 <!-- ✅ نافذة عرض Sea Time -->
-<div id="seaTimeModal" class="modal" style="display: none;">
-  <div class="modal-content">
-    <span class="close" onclick="closeSeaTimeModal()" style="float: left; cursor: pointer;">&times;</span>
-    <h2 style="text-align: center;">📄 سجل الخدمة البحرية (Sea Time)</h2>
-    <table id="seaTimeTable" style="width: 100%; border-collapse: collapse; margin-top: 15px; text-align: center;">
-<thead>
-  <tr>
-    <th>الناقلة</th>
-    <th>الحالة</th>
-    <th>من تاريخ</th>
-    <th>إلى تاريخ</th>
-    <th>المدة</th>
-    <th>الرتبة</th>
-    <th>إجراء</th>
-  </tr>
-</thead>
-      <tbody id="seaTimeTableBody">
-        <!-- سيتم تعبئة السجل هنا -->
-      </tbody>
-    </table>
-<div style="text-align: center; margin-top: 20px;">
-  <button onclick="printSeaTime()" style="padding: 8px 16px;">🖨️ طباعة السجل</button>
-</div>
+<div id="seaTimeModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.6); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 40px 20px; box-sizing: border-box; direction: rtl;">
+  <div style="
+    width: 95%;
+    max-width: 1000px;
+    background-color: #f1f8ff;
+    border-radius: 20px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh;
+    position: relative;
+  ">
+
+    <!-- ✅ زر الإغلاق مثبت -->
+    <span onclick="closeSeaTimeModal()" style="
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      font-size: 26px;
+      font-weight: bold;
+      color: #555;
+      cursor: pointer;
+      z-index: 10;
+    ">&times;</span>
+
+    <!-- ✅ محتوى النافذة بسكرول -->
+    <div style="padding: 30px; overflow-y: auto; flex: 1;">
+      <h2 style="text-align: center; color: #0d47a1;">📄 سجل الخدمة البحرية (Sea Time)</h2>
+
+      <table id="seaTimeTable" style="
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        text-align: center;
+      ">
+        <thead>
+          <tr style="background-color: #bbdefb; color: #0d47a1;">
+            <th>الناقلة</th>
+            <th>الحالة</th>
+            <th>من تاريخ</th>
+            <th>إلى تاريخ</th>
+            <th>المدة</th>
+            <th>الرتبة</th>
+            <th>إجراء</th>
+          </tr>
+        </thead>
+        <tbody id="seaTimeTableBody">
+          <!-- ✅ سيتم تعبئة السجل -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ✅ زر الطباعة ثابت بأسفل النافذة -->
+    <div style="
+      padding: 16px;
+      border-top: 1px solid #ccc;
+      background-color: #f1f8ff;
+      text-align: center;
+    ">
+      <button onclick="printSeaTime()" style="
+        background-color: #1a237e;
+        color: white;
+        padding: 10px 24px;
+        border: none;
+        border-radius: 12px;
+        font-size: 15px;
+        cursor: pointer;
+        transition: 0.3s;
+      ">🖨️ طباعة السجل</button>
+    </div>
   </div>
 </div>
 
@@ -382,6 +714,26 @@
         document.onmousemove = null;
       }
     }
+
+    function sortByName() {
+      const tbody = document.getElementById("employee-table-body");
+      const rows = Array.from(tbody.querySelectorAll("tr"));
+
+      rows.sort((a, b) => {
+        const nameA = a.cells[1]?.textContent.trim().toLowerCase();
+        const nameB = b.cells[1]?.textContent.trim().toLowerCase();
+        return nameA.localeCompare(nameB, 'ar');
+      });
+
+      rows.forEach(row => tbody.appendChild(row));
+    }
+  </script> 
+  
+  <script>
+    window.addEventListener("DOMContentLoaded", () => {
+      const modal = document.getElementById("seaTimeModal");
+      if (modal) modal.style.display = "none";
+    });
   </script>  
 
     <script src="script.js"></script>

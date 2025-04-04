@@ -330,13 +330,8 @@ async function deleteHistoryRecord(historyId) {
   } else {
     alert("✅ تم حذف السجل بنجاح");
 
-    // إعادة تحميل السجل الحالي
-    const currentModalEmpId = document.getElementById("history-employee")?.value || null;
-    if (currentModalEmpId) {
-      showSeaTime(currentModalEmpId); // تحديث السجلات
-    } else {
-      document.getElementById("seaTimeModal").style.display = "none";
-    }
+   // ✅ لا تعيد فتح المودال تلقائيًا بعد الحذف
+document.getElementById("seaTimeModal").style.display = "none";
   }
 }
 
@@ -344,6 +339,12 @@ async function deleteHistoryRecord(historyId) {
 function closeSeaTimeModal() {
     const modal = document.getElementById("seaTimeModal");
     if (modal) modal.style.display = "none";
+}
+
+// ✅ دالة فتح نافذة السجل
+function showSeaTimeModal() {
+  const modal = document.getElementById("seaTimeModal");
+  if (modal) modal.style.display = "flex";
 }
 
 // ✅ دالة لاسترجاع الفلاتر المحددة قبل التحديث
@@ -390,10 +391,10 @@ function displayEmployees(employees) {
             <td>${crew.status ?? "غير معروف"}</td>
             <td>${crew.note ?? "-"}</td>
             <td><td>
-  <button onclick="editCrewMember('${crew.id}')">✏ تعديل</button>
-  <button onclick="deleteCrewMember('${crew.id}')">🗑 حذف</button>
-  <button onclick="showSeaTime('${crew.id}')">📄 السجل</button>
-  <button onclick="showEmployeeProfile('${crew.id}')">📋 ملف الموظف</button>
+  <button class="action-btn btn-edit" onclick="editCrewMember('${crew.id}')">✏ تعديل</button>
+  <button class="action-btn btn-delete" onclick="deleteCrewMember('${crew.id}')">🗑 حذف</button>
+  <button class="action-btn btn-history" onclick="showSeaTime('${crew.id}')">📄 السجل</button>
+  <button class="action-btn btn-profile" onclick="showEmployeeProfile('${crew.id}')">📋 ملف الموظف</button>
 </td>
             </td>
         `;
@@ -919,8 +920,25 @@ function filterDropdown(containerId, inputElement) {
 
 // ✅ تطبيق الفلترة عند الضغط على OK
 function applyFilters() {
-    filterCrew(); // ✅ تشغيل الفلترة
-    closeAllDropdowns(); // ✅ إغلاق القوائم بعد الاختيار
+  // ✅ تحديث عدد المختارات داخل الأزرار
+  updateFilterButtonText('ranks-container', 'ranks-button', '🎖 الرتب');
+  updateFilterButtonText('ships-container', 'ships-button', '🚢 الناقلات');
+  updateFilterButtonText('status-container', 'status-button', '🟢 الحالات');
+
+  // ✅ شغل الفلترة
+  filterCrew();
+
+  // ✅ أغلق القوائم بعد الاختيار
+  closeAllDropdowns();
+}
+
+function updateFilterButtonText(containerId, buttonId, label) {
+  const checkboxes = document.querySelectorAll(`#${containerId} input[type="checkbox"]:checked`);
+  const count = checkboxes.length;
+  const button = document.getElementById(buttonId);
+  if (button) {
+    button.innerHTML = count > 0 ? `${label} (${count}) ⬇` : `${label} ⬇`;
+  }
 }
 
 function closeAllDropdowns() {
@@ -943,19 +961,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // ✅ إظهار نافذة إضافة موظف وتحميل البيانات
 function showAddModal() {
-    console.log("🟢 فتح نافذة إضافة موظف...");
-    
-    let modal = document.getElementById("addModal");
-    if (!modal) {
-        console.error("❌ خطأ: لم يتم العثور على نافذة إضافة الموظف!");
-        return;
-    }
+  console.log("🟢 فتح نافذة إضافة موظف...");
+  
+  let modal = document.getElementById("addModal");
+  if (!modal) {
+      console.error("❌ خطأ: لم يتم العثور على نافذة إضافة الموظف!");
+      return;
+  }
 
-    // تحميل القيم في القوائم المنسدلة
-    loadAddModalData();
+  // تحميل القيم في القوائم المنسدلة
+  loadAddModalData();
 
-    // عرض النافذة
-    modal.style.display = "block";
+  // ✅ عرض نافذة الإضافة فقط
+  modal.style.display = "flex";
 }
 
 // ✅ دالة إغلاق نافذة إضافة الموظف
