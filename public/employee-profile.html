@@ -128,12 +128,26 @@
 
   <div class="section">
     <h3>📅  سجل الخدمة البحرية</h3>
+    <div style="margin-bottom: 10px; text-align: left;">
+      <label for="filterType">📂 تصفية حسب النوع:</label>
+      <select id="filterType" onchange="filterServiceTable()">
+        <option value="all">الكل</option>
+        <option value="service">الصعود</option>
+        <option value="rest">الاستراحة</option>
+      </select>
+    </div>    
     <div class="form-inline">
-      <input type="text" id="service-ship" placeholder="الناقلة">
-      <input type="text" id="service-status" placeholder="الحالة">
+      <select id="service-ship">
+        <option value="">اختر الناقلة</option>
+      </select>
+      <select id="service-status">
+        <option value="">اختر الحالة</option>
+      </select>
       <input type="date" id="service-join" placeholder="من تاريخ">
       <input type="date" id="service-leave" placeholder="إلى تاريخ">
-      <input type="text" id="service-rank" placeholder="الرتبة">
+      <select id="service-rank">
+        <option value="">اختر الرتبة</option>
+      </select>
       <button onclick="addServiceEntry()">➕ إضافة خدمة</button>
     </div>    
     <table>
@@ -147,6 +161,7 @@
   </div>
   
   <script>
+    let fullHistory = []; // ضروري تكون متعرفة خارج الدوال
     const SUPABASE_URL = "https://hhglsrugbayccdboasaj.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhoZ2xzcnVnYmF5Y2NkYm9hc2FqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI5NTEzMDIsImV4cCI6MjA1ODUyNzMwMn0._wHDCT00aa4IQYJNzpL4hjcz9BURslqJt9OUtfxjxlM";
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -155,39 +170,20 @@
     const employeeId = urlParams.get("id");
 
     async function loadEmployeeProfile() {
-    if (!employeeId) return;
+  if (!employeeId) return;
 
-    const { data: crew } = await supabase.from("crew_list").select("*").eq("id", employeeId).single();
-    if (crew) {
-      document.getElementById("profile-name").textContent = crew.name;
-      document.getElementById("profile-rank").textContent = crew.rank;
-      document.getElementById("profile-status").textContent = crew.status;
-      document.getElementById("profile-ship").textContent = crew.ship;
-    }
-
-    const { data: history } = await supabase.from("history").select("*").eq("employee_id", employeeId);
-    let totalDays = 0;
-    document.getElementById("seaTimeProfileBody").innerHTML = history.map(entry => {
-      totalDays += entry.duration;
-      return `<tr>
-        <td contenteditable="false">${entry.ship}</td>
-        <td contenteditable="false">${entry.status}</td>
-        <td contenteditable="false">${entry.join_date}</td>
-        <td contenteditable="false">${entry.leave_date}</td>
-        <td contenteditable="false">${entry.duration}</td>
-        <td contenteditable="false">${entry.rank}</td>
-        <td class="actions">
-          <button class="edit" onclick="editServiceEntry(this, '${entry.id}')">✏️</button>
-          <button class="delete" onclick="deleteServiceEntry('${entry.id}')">🗑️</button>
-        </td>
-      </tr>`;
-    }).join('');
-
-    document.getElementById("sea-moves").textContent = history.length;
-    document.getElementById("sea-total-days").textContent = totalDays;
-
-    loadCertificates();
+  const { data: crew } = await supabase.from("crew_list").select("*").eq("id", employeeId).single();
+  if (crew) {
+    document.getElementById("profile-name").textContent = crew.name;
+    document.getElementById("profile-rank").textContent = crew.rank;
+    document.getElementById("profile-status").textContent = crew.status;
+    document.getElementById("profile-ship").textContent = crew.ship;
   }
+
+  const { data: history } = await supabase.from("history").select("*").eq("employee_id", employeeId);
+fullHistory = history || [];
+renderServiceTable(fullHistory);
+}
 
   async function deleteServiceEntry(id) {
     if (!confirm("هل أنت متأكد من حذف هذه الخدمة؟")) return;
@@ -330,6 +326,26 @@
       }
     }
 
+    function smartDuration(joinDateStr, leaveDateStr, status) {
+  const today = new Date();
+  const join = joinDateStr ? new Date(joinDateStr) : null;
+  const leave = leaveDateStr ? new Date(leaveDateStr) : null;
+
+  if (status === "ملتحق" && join && (!leaveDateStr || !leave)) {
+    return calculateDuration(join, today);
+  }
+
+  if (status === "مستراح" && leave && (!joinDateStr || !join)) {
+    return calculateDuration(leave, today);
+  }
+
+  if (join && leave) {
+    return calculateDuration(join, leave);
+  }
+
+  return 0;
+}
+
     async function addServiceEntry() {
   const ship = document.getElementById("service-ship").value.trim();
   const status = document.getElementById("service-status").value.trim();
@@ -367,7 +383,78 @@
   }
 }
 
-    document.addEventListener("DOMContentLoaded", loadEmployeeProfile);
+document.addEventListener("DOMContentLoaded", () => {
+  loadEmployeeProfile();
+  loadServiceDropdowns();
+});
+
+async function loadServiceDropdowns() {
+  const { data: crew } = await supabase.from("crew_list").select("ship, status, rank");
+  if (!crew) return;
+
+  const ships = [...new Set(crew.map(c => c.ship).filter(Boolean))];
+  const statuses = [...new Set(crew.map(c => c.status).filter(Boolean))];
+  const ranks = [...new Set(crew.map(c => c.rank).filter(Boolean))];
+
+  const shipSelect = document.getElementById("service-ship");
+  const statusSelect = document.getElementById("service-status");
+  const rankSelect = document.getElementById("service-rank");
+
+  ships.sort().forEach(ship => {
+    const opt = document.createElement("option");
+    opt.value = opt.textContent = ship;
+    shipSelect.appendChild(opt);
+  });
+
+  statuses.sort().forEach(status => {
+    const opt = document.createElement("option");
+    opt.value = opt.textContent = status;
+    statusSelect.appendChild(opt);
+  });
+
+  ranks.sort().forEach(rank => {
+    const opt = document.createElement("option");
+    opt.value = opt.textContent = rank;
+    rankSelect.appendChild(opt);
+  });
+}
+
+function renderServiceTable(data) {
+  let totalDays = 0;
+  document.getElementById("seaTimeProfileBody").innerHTML = data.map(entry => {
+    const dynamicDuration = smartDuration(entry.join_date, entry.leave_date, entry.status);
+    if (entry.ship !== "استراحة") {
+      totalDays += dynamicDuration;
+    }
+    return `<tr>
+      <td>${entry.ship}</td>
+      <td>${entry.status}</td>
+      <td>${entry.join_date || ""}</td>
+      <td>${entry.leave_date || ""}</td>
+      <td>${dynamicDuration} يوم</td>
+      <td>${entry.rank}</td>
+      <td class="actions">
+        <button class="edit" onclick="editServiceEntry(this, '${entry.id}')">✏️</button>
+        <button class="delete" onclick="deleteServiceEntry('${entry.id}')">🗑️</button>
+      </td>
+    </tr>`;
+  }).join('');
+  document.getElementById("sea-total-days").textContent = totalDays;
+  document.getElementById("sea-moves").textContent = data.length;
+}
+
+function filterServiceTable() {
+  const type = document.getElementById("filterType").value;
+  let filtered = [...fullHistory];
+
+  if (type === "service") {
+    filtered = fullHistory.filter(e => e.ship !== "استراحة");
+  } else if (type === "rest") {
+    filtered = fullHistory.filter(e => e.ship === "استراحة");
+  }
+
+  renderServiceTable(filtered);
+}
   </script>
 </body>
 </html>
