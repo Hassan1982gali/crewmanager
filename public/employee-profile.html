@@ -183,6 +183,8 @@
   const { data: history } = await supabase.from("history").select("*").eq("employee_id", employeeId);
 fullHistory = history || [];
 renderServiceTable(fullHistory);
+
+loadCertificates();
 }
 
   async function deleteServiceEntry(id) {
