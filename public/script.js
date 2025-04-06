@@ -1137,7 +1137,7 @@ function printFilteredData() {
         <head>
             <title>🖨️ طباعة بيانات الطاقم</title>
             <style>
-                body { font-family: 'Arial', sans-serif; text-align: center; direction: rtl; }
+                body { font-family: 'Cairo', sans-serif; text-align: center; direction: rtl; }
                 h2 { margin-bottom: 10px; }
                 table { width: 100%; border-collapse: collapse; margin-top: 20px; }
                 th, td { padding: 8px; border: 1px solid #000; text-align: center; }
@@ -1208,7 +1208,7 @@ function printSeaTime() {
     <head>
       <title>🖨️ سجل الخدمة البحرية</title>
       <style>
-        body { font-family: 'Arial', sans-serif; direction: rtl; text-align: center; }
+        body { font-family: 'Cairo', sans-serif; direction: rtl; text-align: center; }
         h2 { margin-top: 10px; }
         h3 { margin-top: 5px; font-weight: normal; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }

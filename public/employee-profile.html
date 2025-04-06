@@ -104,6 +104,20 @@
     </button>
   </div>  
 
+  <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 20px;">
+    <div>
+      <img id="profile-image" src="" alt="صورة الموظف" style="width: 120px; height: 120px; object-fit: cover; border-radius: 12px; border: 2px solid #ccc;">
+    </div>
+    <div class="no-print">
+      <input type="file" id="upload-image" accept="image/*">
+      <button onclick="uploadEmployeeImage()">📤 رفع الصورة</button>
+      <button id="delete-image-btn" onclick="deleteEmployeeImage()" style="background-color: #d32f2f; color: white; margin-right: 10px;">🗑️ حذف الصورة</button>
+      <p style="font-size: 14px; color: #555; margin-top: 5px;">
+        📸 يفضل رفع صورة بحجم أقل من 500x500 بكسل، وأقل من 300 كيلوبايت.
+      </p>
+    </div>    
+  </div>  
+
   <div class="section">
     <p><strong>👤 الاسم:</strong> <span id="profile-name">---</span></p>
     <p><strong>🎖️ الرتبة:</strong> <span id="profile-rank">---</span></p>
@@ -188,6 +202,9 @@
     document.getElementById("profile-rank").textContent = crew.rank;
     document.getElementById("profile-status").textContent = crew.status;
     document.getElementById("profile-ship").textContent = crew.ship;
+  }
+  if (crew.image_url) {
+    document.getElementById("profile-image").src = crew.image_url;
   }
 
   const { data: history } = await supabase.from("history").select("*").eq("employee_id", employeeId);
@@ -395,6 +412,82 @@ loadCertificates();
   }
 }
 
+async function uploadEmployeeImage() {
+  const fileInput = document.getElementById("upload-image");
+  const file = fileInput.files[0];
+
+  if (!file) {
+    alert("يرجى اختيار صورة");
+    return;
+  }
+
+  // 🔍 تحقق من حجم الصورة (300KB = 300 * 1024 bytes)
+  if (file.size > 300 * 1024) {
+    alert("❌ حجم الصورة أكبر من 300KB، يرجى اختيار صورة أصغر.");
+    return;
+  }
+
+  const fileExt = file.name.split('.').pop();
+  const fileName = `${employeeId}.${fileExt}`;
+  const filePath = `employees/${fileName}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("employees")
+    .upload(filePath, file, { upsert: true });
+
+  if (uploadError) {
+    alert("فشل رفع الصورة: " + uploadError.message);
+    return;
+  }
+
+  const { data } = supabase.storage
+    .from("employees")
+    .getPublicUrl(filePath);
+
+  const imageUrl = data.publicUrl;
+
+  const { error: updateError } = await supabase
+    .from("crew_list")
+    .update({ image_url: imageUrl })
+    .eq("id", employeeId);
+
+  if (updateError) {
+    alert("فشل حفظ الرابط: " + updateError.message);
+  } else {
+    document.getElementById("profile-image").src = imageUrl;
+    alert("✅ تم رفع الصورة بنجاح");
+  }
+}
+
+async function deleteEmployeeImage() {
+  const fileExt = "jpg"; // إذا تضمن امتداد معيّن
+  const filePath = `employees/${employeeId}.${fileExt}`;
+
+  // حذف من Supabase Storage
+  const { error: deleteError } = await supabase.storage
+    .from("employees")
+    .remove([filePath]);
+
+  if (deleteError) {
+    alert("فشل حذف الصورة: " + deleteError.message);
+    return;
+  }
+
+  // حذف الرابط من قاعدة البيانات
+  const { error: updateError } = await supabase
+    .from("crew_list")
+    .update({ image_url: null })
+    .eq("id", employeeId);
+
+  if (updateError) {
+    alert("فشل تحديث بيانات الموظف: " + updateError.message);
+    return;
+  }
+
+  document.getElementById("profile-image").src = "";
+  alert("✅ تم حذف الصورة بنجاح");
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   loadEmployeeProfile();
   loadServiceDropdowns();
@@ -433,6 +526,7 @@ async function loadServiceDropdowns() {
 
 function renderServiceTable(data) {
   let totalDays = 0;
+  data.sort((a, b) => new Date(b.join_date) - new Date(a.join_date)); // تنازلي
   document.getElementById("seaTimeProfileBody").innerHTML = data.map(entry => {
     const dynamicDuration = smartDuration(entry.join_date, entry.leave_date, entry.status);
     if (entry.ship !== "استراحة") {
@@ -471,14 +565,25 @@ function filterServiceTable() {
 function printSection(sectionId) {
   const section = document.getElementById(sectionId);
   const employeeName = document.getElementById("profile-name").textContent;
-
+  const profileImage = document.getElementById("profile-image").src;
   const originalContent = document.body.innerHTML;
+
+  const clonedSection = section.cloneNode(true);
+
+  if (sectionId === 'service-section') {
+    const seaSummary = document.querySelectorAll(".section")[2];
+    const summaryClone = seaSummary.cloneNode(true);
+    clonedSection.prepend(summaryClone);
+  }
 
   const printableContent = `
     <div style="font-family: 'Cairo', sans-serif; direction: rtl; padding: 20px;">
-      <h2 style="text-align: center; color: #1a237e;">🧾 ${employeeName}</h2>
+      <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 20px;">
+        ${profileImage ? `<img src="${profileImage}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 10px; border: 1px solid #aaa;">` : ''}
+        <h2 style="margin: 0; color: #1a237e;">🧾 ${employeeName}</h2>
+      </div>
       <hr style="margin: 20px 0;">
-      ${section.innerHTML}
+      ${clonedSection.innerHTML}
     </div>
   `;
 
