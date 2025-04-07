@@ -1423,3 +1423,31 @@ window.updateRowIndices = updateRowIndices;
 window.sortByLeaveDuration = sortByLeaveDuration;
 window.showSeaTime = showSeaTime;
 window.closeSeaTimeModal = closeSeaTimeModal;
+// ✅ زر تثبيت التطبيق (PWA)
+let deferredPrompt;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+
+  const installBtn = document.getElementById('install-app-btn');
+  if (installBtn) {
+    installBtn.style.display = 'block';
+
+    installBtn.addEventListener('click', () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+
+        deferredPrompt.userChoice.then((choiceResult) => {
+          if (choiceResult.outcome === 'accepted') {
+            console.log('✅ تم تثبيت التطبيق');
+          } else {
+            console.log('❌ تم إلغاء التثبيت');
+          }
+          deferredPrompt = null;
+          installBtn.style.display = 'none';
+        });
+      }
+    });
+  }
+});
