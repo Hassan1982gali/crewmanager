@@ -137,7 +137,7 @@
 
     <table>
       <thead>
-        <tr><th>اسم الشهادة</th><th>تاريخ الإصدار</th><th>تاريخ النفاذ</th><th class="no-print">إجراءات</th>
+        <tr><th>اسم الشهادة</th><th>تاريخ الإصدار</th><th>تاريخ النفاذ</th><th class="no-print">إجراءات</th><th class="no-print">الملف</th>
         </tr>
       </thead>
       <tbody id="certificateTableBody"></tbody>
@@ -253,6 +253,7 @@ loadCertificates();
   const { data: certs } = await supabase.from("certificates").select("*").eq("employee_id", employeeId);
   const today = new Date();
 
+  console.log(certs);
   document.getElementById("certificateTableBody").innerHTML = certs.map(cert => {
     let bgColor = "";
     let expiryDisplay = cert.expiry_date;
@@ -278,6 +279,22 @@ loadCertificates();
         <button class="edit" onclick="editCertificate(this, '${cert.id}')">✏️</button>
         <button class="delete" onclick="deleteCertificate('${cert.id}')">🗑️</button>
       </td>
+      <td class="no-print">
+  <div style="display: flex; flex-direction: column; align-items: start; gap: 5px;">
+    <label style="cursor: pointer; color: #1a237e; font-weight: bold;">
+      📤 رفع
+      <input type="file" accept=".pdf,.png,.jpg" style="display: none"
+             onchange="uploadCertificateFile('${cert.id}', this.files[0])" />
+    </label>
+    ${cert.document_url ? `
+      <div>
+        <a href="${cert.document_url}" target="_blank" style="margin-left: 10px;">📎 عرض</a>
+        <a href="${cert.document_url}" download>⬇️ تحميل</a>
+        <button onclick="deleteCertificateDocument('${cert.id}', '${cert.document_url}')" style="background: transparent; color: red; border: none; cursor: pointer;">🗑️ حذف الوثيقة</button>
+      </div>
+    ` : ''}
+  </div>
+</td>
     </tr>`;
   }).join('');
 }
@@ -309,10 +326,50 @@ loadCertificates();
     }
 
     async function deleteCertificate(id) {
-      if (!confirm("هل أنت متأكد من حذف هذه الشهادة؟")) return;
-      await supabase.from("certificates").delete().eq("id", id);
-      loadCertificates();
+  const confirmDelete = confirm("هل أنت متأكد من حذف هذه الشهادة؟");
+  if (!confirmDelete) return;
+
+  // 👇 أول شي نجيب الامتداد حتى نحذف الملف
+  const { data, error: fetchError } = await supabase
+    .from("certificates")
+    .select("document_url")
+    .eq("id", id)
+    .single();
+
+  if (fetchError) {
+    alert("فشل في جلب بيانات الشهادة: " + fetchError.message);
+    return;
+  }
+
+  // نحسب اسم الملف من الرابط
+  if (data.document_url) {
+    const filePath = data.document_url.split("/").pop(); // اسم الملف فقط
+
+    const { error: deleteFileError } = await supabase
+      .storage
+      .from("certificates-docs")
+      .remove([filePath]);
+
+    if (deleteFileError) {
+      alert("فشل حذف الملف من التخزين: " + deleteFileError.message);
+      return;
     }
+  }
+
+  // ✅ بعدها نحذف من قاعدة البيانات
+  const { error: deleteRowError } = await supabase
+    .from("certificates")
+    .delete()
+    .eq("id", id);
+
+  if (deleteRowError) {
+    alert("فشل حذف السطر من قاعدة البيانات: " + deleteRowError.message);
+    return;
+  }
+
+  alert("✅ تم حذف الشهادة والملف بنجاح");
+  loadCertificates(); // نعيد تحميل القائمة
+}
 
     function calculateDuration(startDateStr, endDateStr) {
   const start = new Date(startDateStr);
@@ -524,6 +581,46 @@ async function loadServiceDropdowns() {
   });
 }
 
+async function uploadCertificateFile(certId, file) {
+  if (!file) return alert("يرجى اختيار ملف");
+
+  const fileExt = file.name.split('.').pop();
+  const filePath = `${certId}.${fileExt}`;
+
+  const { error: uploadError } = await supabase
+    .storage
+    .from('certificates-docs')
+    .upload(filePath, file, {
+      cacheControl: '3600',
+      upsert: true,
+    });
+
+  if (uploadError) {
+    alert("فشل رفع الملف: " + uploadError.message);
+    return;
+  }
+
+  // 🟢 احصل على الرابط الصحيح
+  const { data: urlData } = supabase.storage
+    .from('certificates-docs')
+    .getPublicUrl(filePath);
+
+  const publicUrl = urlData.publicUrl;
+
+  // 🟢 خزنه داخل قاعدة البيانات
+  const { error: updateError } = await supabase
+    .from('certificates')
+    .update({ document_url: publicUrl })
+    .eq('id', certId);
+
+  if (updateError) {
+    alert("فشل تحديث الرابط في قاعدة البيانات: " + updateError.message);
+  } else {
+    alert("✅ تم رفع الشهادة وتحديث الرابط");
+    loadCertificates(); // لإعادة تحميل الشهادات بعد التحديث
+  }
+}
+
 function renderServiceTable(data) {
   let totalDays = 0;
   data.sort((a, b) => new Date(b.join_date) - new Date(a.join_date)); // تنازلي
@@ -591,6 +688,48 @@ function printSection(sectionId) {
   window.print();
   document.body.innerHTML = originalContent;
   location.reload();
+}
+
+async function clearCertificateUrl(certId) {
+  const { error } = await supabase
+    .from("certificates")
+    .update({ document_url: null })
+    .eq("id", certId);
+
+  if (error) {
+    console.log("❌ فشل حذف الرابط من القاعدة:", error.message);
+  } else {
+    console.log("✅ تم حذف الرابط من القاعدة");
+  }
+}
+
+async function deleteCertificateDocument(certId, documentUrl) {
+  const fileName = documentUrl.split('/').pop(); // استخراج اسم الملف فقط
+
+  // 1️⃣ حذف الملف من التخزين
+  const { error: deleteStorageError } = await supabase
+    .storage
+    .from('certificates-docs')
+    .remove([fileName]);
+
+  if (deleteStorageError) {
+    alert("❌ فشل حذف الوثيقة من التخزين: " + deleteStorageError.message);
+    return;
+  }
+
+  // 2️⃣ تحديث الشهادة وحذف الرابط
+  const { error: updateDbError } = await supabase
+    .from("certificates")
+    .update({ document_url: null })
+    .eq("id", certId);
+
+  if (updateDbError) {
+    alert("❌ فشل حذف الرابط من قاعدة البيانات: " + updateDbError.message);
+    return;
+  }
+
+  alert("✅ تم حذف الوثيقة بنجاح");
+  loadCertificates(); // لإعادة تحميل الجدول وتحديث العرض
 }
   </script>
 </body>
