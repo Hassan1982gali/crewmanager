@@ -123,7 +123,29 @@
     <p><strong>🎖️ الرتبة:</strong> <span id="profile-rank">---</span></p>
     <p><strong>⚓ الحالة:</strong> <span id="profile-status">---</span></p>
     <p><strong>⛴️ الناقلة:</strong> <span id="profile-ship">---</span></p>
-  </div>
+  
+    <p><strong>📱 الهاتف 1:</strong>
+      <input id="profile-phone1" type="text" placeholder="0780xxxxxxx"
+        style="padding: 6px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Cairo', sans-serif; font-size: 16px;">
+    </p>
+  
+    <p><strong>📞 الهاتف 2:</strong>
+      <input id="profile-phone2" type="text" placeholder="0770xxxxxxx"
+        style="padding: 6px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Cairo', sans-serif; font-size: 16px;">
+    </p>
+  
+    <p><strong>📍 العنوان:</strong>
+      <input id="profile-address" type="text" placeholder="مثلاً: البصرة - المعقل"
+        style="padding: 6px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Cairo', sans-serif; font-size: 16px; width: 100%;">
+    </p>
+  
+    <div style="margin-top: 10px;">
+      <button onclick="updateEmployeeInfo()"
+        style="padding: 8px 20px; background-color: #0d47a1; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: 'Cairo', sans-serif; font-size: 16px;">
+        💾 حفظ المعلومات
+      </button>
+    </div>
+  </div>  
 
   <div class="section" id="certificates-section">
     <h3>🎓 الشهادات البحرية</h3>  
@@ -146,7 +168,7 @@
 
   <div class="section">
     <h3>🧭 ملخص Sea Time</h3>
-    <p>عدد التنقلات: <span id="sea-moves">0</span></p>
+    <p class="no-print">عدد التنقلات: <span id="sea-moves">0</span></p>
     <p>إجمالي الأيام في البحر: <span id="sea-total-days">0</span> يوم</p>
   </div>
 
@@ -202,6 +224,9 @@
     document.getElementById("profile-rank").textContent = crew.rank;
     document.getElementById("profile-status").textContent = crew.status;
     document.getElementById("profile-ship").textContent = crew.ship;
+    document.getElementById("profile-phone1").value = crew.phone1 || "";
+    document.getElementById("profile-phone2").value = crew.phone2 || "";
+    document.getElementById("profile-address").value = crew.address || "";
   }
   if (crew.image_url) {
     document.getElementById("profile-image").src = crew.image_url;
@@ -212,6 +237,23 @@ fullHistory = history || [];
 renderServiceTable(fullHistory);
 
 loadCertificates();
+}
+
+async function updateEmployeeInfo() {
+  const phone1 = document.getElementById("profile-phone1").value.trim();
+  const phone2 = document.getElementById("profile-phone2").value.trim();
+  const address = document.getElementById("profile-address").value.trim();
+
+  const { error } = await supabase
+    .from("crew_list")
+    .update({ phone1, phone2, address })
+    .eq("id", employeeId);
+
+  if (error) {
+    alert("❌ فشل التحديث: " + error.message);
+  } else {
+    alert("✅ تم حفظ معلومات الموظف بنجاح");
+  }
 }
 
   async function deleteServiceEntry(id) {
@@ -518,7 +560,7 @@ async function uploadEmployeeImage() {
 
 async function deleteEmployeeImage() {
   const fileExt = "jpg"; // إذا تضمن امتداد معيّن
-  const filePath = `employees/${employeeId}.${fileExt}`;
+  const filePath = `${employeeId}.${fileExt}`;
 
   // حذف من Supabase Storage
   const { error: deleteError } = await supabase.storage
@@ -581,43 +623,49 @@ async function loadServiceDropdowns() {
   });
 }
 
-async function uploadCertificateFile(certId, file) {
-  if (!file) return alert("يرجى اختيار ملف");
+async function uploadEmployeeImage() {
+  const fileInput = document.getElementById("upload-image");
+  const file = fileInput.files[0];
 
-  const fileExt = file.name.split('.').pop();
-  const filePath = `${certId}.${fileExt}`;
-
-  const { error: uploadError } = await supabase
-    .storage
-    .from('certificates-docs')
-    .upload(filePath, file, {
-      cacheControl: '3600',
-      upsert: true,
-    });
-
-  if (uploadError) {
-    alert("فشل رفع الملف: " + uploadError.message);
+  if (!file) {
+    alert("يرجى اختيار صورة");
     return;
   }
 
-  // 🟢 احصل على الرابط الصحيح
-  const { data: urlData } = supabase.storage
-    .from('certificates-docs')
+  if (file.size > 300 * 1024) {
+    alert("❌ حجم الصورة أكبر من 300KB");
+    return;
+  }
+
+  const fileExt = file.name.split('.').pop();
+  const fileName = `${employeeId}.${fileExt}`; // اسم فقط بدون مجلد
+  const filePath = fileName;
+
+  const { error: uploadError } = await supabase.storage
+    .from("employees")
+    .upload(filePath, file, { upsert: true });
+
+  if (uploadError) {
+    alert("فشل رفع الصورة: " + uploadError.message);
+    return;
+  }
+
+  const { data } = supabase.storage
+    .from("employees")
     .getPublicUrl(filePath);
 
-  const publicUrl = urlData.publicUrl;
+  const imageUrl = data?.publicUrl;
 
-  // 🟢 خزنه داخل قاعدة البيانات
   const { error: updateError } = await supabase
-    .from('certificates')
-    .update({ document_url: publicUrl })
-    .eq('id', certId);
+    .from("crew_list")
+    .update({ image_url: imageUrl })
+    .eq("id", employeeId);
 
   if (updateError) {
-    alert("فشل تحديث الرابط في قاعدة البيانات: " + updateError.message);
+    alert("فشل حفظ الرابط: " + updateError.message);
   } else {
-    alert("✅ تم رفع الشهادة وتحديث الرابط");
-    loadCertificates(); // لإعادة تحميل الشهادات بعد التحديث
+    document.getElementById("profile-image").src = imageUrl;
+    alert("✅ تم رفع الصورة بنجاح");
   }
 }
 
