@@ -352,6 +352,11 @@
               <button onclick="applyFilters()">OK</button>
               <button onclick="clearFilters('ranks-container')">Cancel</button>
             </div>
+            <div style="margin-top: 10px; text-align: left;">
+              <button onclick="addNewItem('rank')" style="background-color: #2196f3; color: white; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer;">
+                ➕ إضافة رتبة جديدة
+              </button>
+            </div>            
           </div>
         </div>
       </div>
@@ -368,6 +373,11 @@
               <button onclick="applyFilters()">OK</button>
               <button onclick="clearFilters('ships-container')">Cancel</button>
             </div>
+            <div style="margin-top: 10px; text-align: left;">
+              <button onclick="addNewItem('ship')" style="background-color: #2196f3; color: white; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer;">
+                ➕ إضافة ناقلة جديدة
+              </button>
+            </div>            
           </div>
         </div>
       </div>
@@ -384,6 +394,11 @@
               <button onclick="applyFilters()">OK</button>
               <button onclick="clearFilters('status-container')">Cancel</button>
             </div>
+            <div style="margin-top: 10px; text-align: left;">
+              <button onclick="addNewItem('status')" style="background-color: #2196f3; color: white; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer;">
+                ➕ إضافة حالة جديدة
+              </button>
+            </div>            
           </div>
         </div>
       </div>
@@ -399,23 +414,23 @@
     </div>
 
     <table>
-        <thead>
-            <tr>
-                <th>#</th>
-                <th onclick="sortByName()" style="cursor: pointer;">الاسم ⬍</th>
-                <th>الرتبة</th>
-                <th>الناقلة</th>
-                <th>تاريخ الالتحاق</th>
-                <th>مدة الالتحاق <button onclick="sortByDuration('join_duration')">⬆⬇</button></th>
-                <th>تاريخ النزول</th>
-                <th>مدة النزول <button onclick="sortByDuration('leave_duration')">⬆⬇</button></th>
-                <th>الحالة</th>
-                <th>الملاحظات</th>
-                <th>إجراءات</th>
-            </tr>
-        </thead>
-        <tbody id="employee-table-body"></tbody>
-    </table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th onclick="sortByName()" style="cursor: pointer;">الاسم ⬍</th>
+          <th>الرتبة</th>
+          <th>الناقلة</th>
+          <th>تاريخ الالتحاق</th>
+          <th>مدة الالتحاق <button onclick="sortByDuration('join_duration')">⬆⬇</button></th>
+          <th>تاريخ النزول</th>
+          <th>مدة النزول <button onclick="sortByDuration('leave_duration')">⬆⬇</button></th>
+          <th>الحالة</th>
+          <th>الملاحظات</th>
+          <th class="actions-cell">إجراءات</th>
+        </tr>
+      </thead>
+      <tbody id="employee-table-body"></tbody>
+    </table>    
 
 <!-- ✅ نافذة إضافة موظف (Modal) -->
 <div id="addModal" class="modal">
@@ -505,6 +520,11 @@
 
         <button onclick="saveEditCrewMember()">💾 حفظ</button>
     </div>
+</div>
+
+<div id="print-filter-summary" style="display: none; margin: 20px 0; font-size: 16px;">
+  <strong>🧾 الفلاتر المطبقة:</strong>
+  <div id="filter-details-print" style="margin-top: 10px; line-height: 1.6;"></div>
 </div>
 
 <table class="summary-table-print" style="display: none;">

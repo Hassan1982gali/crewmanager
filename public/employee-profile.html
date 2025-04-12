@@ -263,33 +263,42 @@ async function updateEmployeeInfo() {
   }
 
   async function editServiceEntry(button, id) {
-    const row = button.closest("tr");
-    const cells = row.querySelectorAll("td");
-    const [shipCell, statusCell, joinCell, leaveCell, durationCell, rankCell] = cells;
+  const row = button.closest("tr");
+  const cells = row.querySelectorAll("td");
+  const [shipCell, statusCell, joinCell, leaveCell, durationCell, rankCell] = cells;
 
-    if (button.textContent.includes("✏️")) {
-      shipCell.contentEditable = statusCell.contentEditable = joinCell.contentEditable = leaveCell.contentEditable = durationCell.contentEditable = rankCell.contentEditable = true;
-      shipCell.focus();
-      button.textContent = "💾";
-      button.classList.remove("edit");
+  if (button.textContent.includes("✏️")) {
+    shipCell.contentEditable = statusCell.contentEditable = joinCell.contentEditable = leaveCell.contentEditable = durationCell.contentEditable = rankCell.contentEditable = true;
+    shipCell.focus();
+    button.textContent = "💾";
+    button.classList.remove("edit");
+  } else {
+    shipCell.contentEditable = statusCell.contentEditable = joinCell.contentEditable = leaveCell.contentEditable = durationCell.contentEditable = rankCell.contentEditable = false;
+    button.textContent = "✏️";
+    button.classList.add("edit");
+
+    const joinValue = joinCell.textContent.trim();
+    const leaveValue = leaveCell.textContent.trim();
+
+    const joinDate = joinValue === "" ? null : joinValue;
+    const leaveDate = leaveValue === "" ? null : leaveValue;
+
+    const { error } = await supabase.from("history").update({
+      ship: shipCell.textContent.trim(),
+      status: statusCell.textContent.trim(),
+      join_date: joinDate,
+      leave_date: leaveDate,
+      duration: calculateDuration(joinDate, leaveDate),
+      rank: rankCell.textContent.trim()
+    }).eq("id", id);
+
+    if (error) {
+      alert("فشل التعديل: " + error.message);
     } else {
-      shipCell.contentEditable = statusCell.contentEditable = joinCell.contentEditable = leaveCell.contentEditable = durationCell.contentEditable = rankCell.contentEditable = false;
-      button.textContent = "✏️";
-      button.classList.add("edit");
-
-      const { error } = await supabase.from("history").update({
-        ship: shipCell.textContent.trim(),
-        status: statusCell.textContent.trim(),
-        join_date: joinCell.textContent.trim(),
-        leave_date: leaveCell.textContent.trim(),
-        duration: calculateDuration(joinCell.textContent.trim(), leaveCell.textContent.trim()),
-        rank: rankCell.textContent.trim()
-      }).eq("id", id);
-
-      if (error) alert("فشل التعديل: " + error.message);
-      else loadEmployeeProfile();
+      loadEmployeeProfile(); // إعادة تحميل البيانات بعد التعديل
     }
   }
+}
 
     async function loadCertificates() {
   const { data: certs } = await supabase.from("certificates").select("*").eq("employee_id", employeeId);
@@ -413,14 +422,12 @@ async function updateEmployeeInfo() {
   loadCertificates(); // نعيد تحميل القائمة
 }
 
-    function calculateDuration(startDateStr, endDateStr) {
-  const start = new Date(startDateStr);
-  const end = new Date(endDateStr);
+function calculateDuration(startDate, endDate) {
+  if (!startDate || !endDate) return 0;
+  const start = new Date(startDate);
+  const end = new Date(endDate);
   if (isNaN(start) || isNaN(end)) return 0;
-
-  const diffTime = end - start;
-  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-  return diffDays > 0 ? diffDays : 0;
+  return Math.max(0, Math.ceil((end - start) / (1000 * 60 * 60 * 24)));
 }
 
     async function editCertificate(button, id) {
@@ -454,60 +461,73 @@ async function updateEmployeeInfo() {
       }
     }
 
-    function smartDuration(joinDateStr, leaveDateStr, status) {
+    function smartDuration(joinDateStr, leaveDateStr, status, fallbackEndDate = null) {
   const today = new Date();
   const join = joinDateStr ? new Date(joinDateStr) : null;
   const leave = leaveDateStr ? new Date(leaveDateStr) : null;
-
-  if (status === "ملتحق" && join && (!leaveDateStr || !leave)) {
-    return calculateDuration(join, today);
-  }
-
-  if (status === "مستراح" && leave && (!joinDateStr || !join)) {
-    return calculateDuration(leave, today);
-  }
+  const fallback = fallbackEndDate ? new Date(fallbackEndDate) : today;
 
   if (join && leave) {
-    return calculateDuration(join, leave);
+    return calculateDuration(join, leave); // ✅ من صعود إلى نزول
+  }
+
+  if (status === "ملتحق" && join && !leave) {
+    return calculateDuration(join, fallback); // ✅ صاعد ومبعده نزل
+  }
+
+  if (status === "استراحة" && leave && !join) {
+    return calculateDuration(leave, fallback); // ✅ نزل وباقي مستراح
   }
 
   return 0;
 }
 
-    async function addServiceEntry() {
+async function addServiceEntry() {
   const ship = document.getElementById("service-ship").value.trim();
   const status = document.getElementById("service-status").value.trim();
   const join_date = document.getElementById("service-join").value;
   const leave_date = document.getElementById("service-leave").value;
   const rank = document.getElementById("service-rank").value.trim();
 
-  if (!ship || !status || !join_date || !leave_date || !rank) {
-    alert("يرجى ملء جميع الحقول");
+  if (!ship || !status || !join_date || !rank) {
+    alert("⚠️ يرجى ملء الحقول المطلوبة: الناقلة، الحالة، من تاريخ، الرتبة");
     return;
   }
 
-  const duration = calculateDuration(join_date, leave_date);
+  // 🧠 نحسب نهاية المدة
+  let dynamicLeaveDate = leave_date || null;
+
+  // نحسب المدة حسب البيانات المدخلة
+  let duration = 0;
+  if (join_date && dynamicLeaveDate) {
+    duration = calculateDuration(join_date, dynamicLeaveDate);
+  } else if (join_date && !dynamicLeaveDate) {
+    // المستخدم ما كمل الفترة بعد، نحسبها لليوم الحالي
+    duration = calculateDuration(join_date, new Date().toISOString().split("T")[0]);
+  }
 
   const { error } = await supabase.from("history").insert({
     employee_id: employeeId,
     ship,
     status,
     join_date,
-    leave_date,
-    duration,
-    rank
+    leave_date: dynamicLeaveDate,
+    rank,
+    duration
   });
 
   if (error) {
-    alert("فشل في إضافة الخدمة: " + error.message);
+    alert("❌ فشل في إضافة الخدمة: " + error.message);
   } else {
-    // نفرّغ الحقول بعد الإضافة
+    // نفرغ الحقول بعد الحفظ
     document.getElementById("service-ship").value = "";
     document.getElementById("service-status").value = "";
     document.getElementById("service-join").value = "";
     document.getElementById("service-leave").value = "";
     document.getElementById("service-rank").value = "";
-    loadEmployeeProfile();
+
+    alert("✅ تم حفظ السجل بنجاح");
+    loadEmployeeProfile(); // يعيد تحميل السجل تلقائياً
   }
 }
 
@@ -596,13 +616,19 @@ async function loadServiceDropdowns() {
   const { data: crew } = await supabase.from("crew_list").select("ship, status, rank");
   if (!crew) return;
 
-  const ships = [...new Set(crew.map(c => c.ship).filter(Boolean))];
-  const statuses = [...new Set(crew.map(c => c.status).filter(Boolean))];
-  const ranks = [...new Set(crew.map(c => c.rank).filter(Boolean))];
-
+  // نحذف الخيارات القديمة أول شي
   const shipSelect = document.getElementById("service-ship");
   const statusSelect = document.getElementById("service-status");
   const rankSelect = document.getElementById("service-rank");
+
+  shipSelect.innerHTML = '<option value="">اختر الناقلة</option>';
+  statusSelect.innerHTML = '<option value="">اختر الحالة</option>';
+  rankSelect.innerHTML = '<option value="">اختر الرتبة</option>';
+
+  // إزالة التكرار
+  const ships = [...new Set(crew.map(c => c.ship).filter(Boolean))];
+  const statuses = [...new Set(crew.map(c => c.status).filter(Boolean))];
+  const ranks = [...new Set(crew.map(c => c.rank).filter(Boolean))];
 
   ships.sort().forEach(ship => {
     const opt = document.createElement("option");
@@ -669,42 +695,126 @@ async function uploadEmployeeImage() {
   }
 }
 
-function renderServiceTable(data) {
+function renderServiceTable(data, fullList = fullHistory) {
   let totalDays = 0;
-  data.sort((a, b) => new Date(b.join_date) - new Date(a.join_date)); // تنازلي
-  document.getElementById("seaTimeProfileBody").innerHTML = data.map(entry => {
-    const dynamicDuration = smartDuration(entry.join_date, entry.leave_date, entry.status);
+
+  // نرتب القائمة الأصلية حسب التاريخ
+  fullList.sort((a, b) => {
+    const dateA = new Date(a.join_date || a.leave_date || "1900-01-01");
+    const dateB = new Date(b.join_date || b.leave_date || "1900-01-01");
+    return dateB - dateA;
+  });
+
+  // ترتيب العرض حسب data
+  data.sort((a, b) => {
+    const dateA = new Date(a.join_date || a.leave_date || "1900-01-01");
+    const dateB = new Date(b.join_date || b.leave_date || "1900-01-01");
+    return dateB - dateA;
+  });
+
+  console.log("📋 جدول مرتب بالكامل:");
+  data.forEach((row, i) => {
+    console.log(`${i + 1}. الحالة: ${row.status}, الناقلة: ${row.ship}, من: ${row.join_date}, إلى: ${row.leave_date}`);
+  });
+
+  document.getElementById("seaTimeProfileBody").innerHTML = data.map((entry) => {
+    const fullIndex = fullList.findIndex(e => e.id === entry.id);
+    const nextEntry = fullList[fullIndex - 1];
+    const prevEntry = fullList[fullIndex + 1];
+
+    const duration = getServiceDuration(entry, nextEntry, prevEntry);
+
     if (entry.ship !== "استراحة") {
-      totalDays += dynamicDuration;
+      totalDays += duration;
     }
-    return `<tr>
-      <td>${entry.ship}</td>
-      <td>${entry.status}</td>
-      <td>${entry.join_date || ""}</td>
-      <td>${entry.leave_date || ""}</td>
-      <td>${dynamicDuration} يوم</td>
-      <td>${entry.rank}</td>
-      <td class="actions no-print">
-        <button class="edit" onclick="editServiceEntry(this, '${entry.id}')">✏️</button>
-        <button class="delete" onclick="deleteServiceEntry('${entry.id}')">🗑️</button>
-      </td>
-    </tr>`;
-  }).join('');
+
+    console.log(`🔢 [${entry.ship}] المدة المحسوبة = ${duration} يوم`);
+
+    return `
+      <tr>
+        <td>${entry.ship}</td>
+        <td>${entry.status}</td>
+        <td>${entry.join_date || ""}</td>
+        <td>${entry.leave_date || ""}</td>
+        <td>${duration} يوم</td>
+        <td>${entry.rank || "—"}</td>
+        <td class="actions no-print">
+          <button class="edit" onclick="editServiceEntry(this, '${entry.id}')">✏️</button>
+          <button class="delete" onclick="deleteServiceEntry('${entry.id}')">🗑️</button>
+        </td>
+      </tr>
+    `;
+  }).join("");
+
   document.getElementById("sea-total-days").textContent = totalDays;
   document.getElementById("sea-moves").textContent = data.length;
 }
 
-function filterServiceTable() {
-  const type = document.getElementById("filterType").value;
-  let filtered = [...fullHistory];
+function getServiceDuration(entry, nextEntry, prevEntry) {
+  const today = new Date();
 
-  if (type === "service") {
-    filtered = fullHistory.filter(e => e.ship !== "استراحة");
-  } else if (type === "rest") {
-    filtered = fullHistory.filter(e => e.ship === "استراحة");
+  const join = entry.join_date ? new Date(entry.join_date) : null;
+  const leave = entry.leave_date ? new Date(entry.leave_date) : null;
+  const nextJoin = nextEntry?.join_date ? new Date(nextEntry.join_date) : null;
+
+  // ✅ موظف على ناقلة، عنده join و leave → نحسب بينهم
+  if (entry.ship !== "استراحة" && join && leave) {
+    const duration = calculateDuration(join, leave);
+    console.log(`🟢 موظف (صعود ونزول): من ${join.toDateString()} إلى ${leave.toDateString()} = ${duration} يوم`);
+    return duration;
   }
 
-  renderServiceTable(filtered);
+  if (entry.ship !== "استراحة" && join && !leave && nextEntry?.ship === "استراحة" && nextEntry?.leave_date) {
+  const end = new Date(nextEntry.leave_date);
+  const duration = calculateDuration(join, end);
+  console.log(`🟢 صعود إلى استراحة: من ${join.toDateString()} إلى ${end.toDateString()} = ${duration} يوم`);
+  return duration;
+}
+
+  // ✅ موظف على ناقلة، عنده join فقط (ما نزل بعد)
+  if (entry.ship !== "استراحة" && join && !leave) {
+    const duration = calculateDuration(join, today);
+    console.log(`🟢 موظف ملتحق: من ${join.toDateString()} إلى اليوم = ${duration} يوم`);
+    return duration;
+  }
+
+  // ✅ استراحة، عنده leave (بداية الاستراحة) وصعود بعده
+  if (entry.ship === "استراحة" && leave && nextJoin) {
+    const duration = calculateDuration(leave, nextJoin);
+    console.log(`🟠 استراحة: من ${leave.toDateString()} إلى ${nextJoin.toDateString()} = ${duration} يوم`);
+    return duration;
+  }
+
+  // ✅ استراحة حالية
+  if (entry.ship === "استراحة" && leave && !nextJoin) {
+    const duration = calculateDuration(leave, today);
+    console.log(`🟡 استراحة جارية: من ${leave.toDateString()} إلى اليوم = ${duration} يوم`);
+    return duration;
+  }
+
+  return 0;
+}
+
+function filterServiceTable() {
+  const type = document.getElementById("filterType").value;
+
+  // 🔁 نرتب السجل الأصلي قبل كل شي
+  const sortedHistory = [...fullHistory].sort((a, b) => {
+    const dateA = new Date(a.join_date || a.leave_date || "1900-01-01");
+    const dateB = new Date(b.join_date || b.leave_date || "1900-01-01");
+    return dateA - dateB;
+  });
+
+  // ✅ نسوي نسخة فلترة فقط للعرض
+  let filtered = [...sortedHistory];
+  if (type === "service") {
+    filtered = sortedHistory.filter(e => e.ship !== "استراحة");
+  } else if (type === "rest") {
+    filtered = sortedHistory.filter(e => e.ship === "استراحة");
+  }
+
+  // ✅ نعرض الجدول معتمدين على الـ fullHistory للربط الصحيح
+  renderServiceTable(filtered, sortedHistory);
 }
 
 function printSection(sectionId) {

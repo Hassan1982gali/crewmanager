@@ -135,16 +135,65 @@ const rankOrder = [
   "مأمور مائدة",
 ];
 
-// ✅ حساب الفرق بين تاريخين بالأيام
+function getServiceDuration(entry, nextEntry, prevEntry) {
+  const today = new Date();
+
+  const join = entry.join_date ? new Date(entry.join_date) : null;
+  const leave = entry.leave_date ? new Date(entry.leave_date) : null;
+  const nextJoin = nextEntry?.join_date ? new Date(nextEntry.join_date) : null;
+
+  if (entry.ship !== "استراحة" && join && leave) {
+    return calculateDuration(join, leave);
+  }
+
+  if (entry.ship !== "استراحة" && join && !leave && nextEntry?.ship === "استراحة" && nextEntry?.leave_date) {
+    return calculateDuration(join, new Date(nextEntry.leave_date));
+  }
+
+  if (entry.ship !== "استراحة" && join && !leave) {
+    return calculateDuration(join, today);
+  }
+
+  if (entry.ship === "استراحة" && leave && nextJoin) {
+    return calculateDuration(leave, nextJoin);
+  }
+
+  if (entry.ship === "استراحة" && leave && !nextJoin) {
+    return calculateDuration(leave, today);
+  }
+
+  return 0;
+}
+
 function calculateDuration(startDate, endDate) {
-  if (!startDate) return "0";
-  let start = new Date(startDate);
-  let end =
-    endDate && endDate !== "0000-00-00" && endDate !== ""
-      ? new Date(endDate)
-      : new Date();
-  if (isNaN(start.getTime()) || isNaN(end.getTime())) return "0";
-  return Math.ceil((end - start) / (1000 * 60 * 60 * 24)).toString();
+  if (!startDate || !endDate) return 0;
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  if (isNaN(start) || isNaN(end)) return 0;
+  return Math.max(0, Math.ceil((end - start) / (1000 * 60 * 60 * 24)));
+}
+
+// ✅ دالة ذكية لحساب مدة الخدمة حسب الحالة والتواريخ
+function smartServiceDuration(joinDate, leaveDate, status) {
+  const today = new Date();
+
+  if (status === "موظف") {
+    if (joinDate && leaveDate) {
+      return parseInt(calculateDuration(joinDate, leaveDate)) || 0;
+    } else if (joinDate && !leaveDate) {
+      return parseInt(calculateDuration(joinDate, today)) || 0;
+    }
+  }
+
+  if (status === "استراحة") {
+    if (leaveDate && !joinDate) {
+      return parseInt(calculateDuration(leaveDate, today)) || 0;
+    } else if (joinDate && leaveDate) {
+      return parseInt(calculateDuration(leaveDate, joinDate)) || 0;
+    }
+  }
+
+  return 0;
 }
 
 // ✅ تحميل بيانات الطاقم
@@ -249,71 +298,84 @@ async function saveHistoryRecord() {
 }
 
 async function showSeaTime(employeeId) {
-    const modal = document.getElementById("seaTimeModal");
-// ✅ جلب اسم الموظف من crew_list
-const { data: empData, error: empError } = await supabase
-  .from("crew_list")
-  .select("name")
-  .eq("id", employeeId)
-  .single();
+  const modal = document.getElementById("seaTimeModal");
+  const tableBody = document.getElementById("seaTimeTableBody");
 
-if (!empError && empData) {
-  const title = modal.querySelector("h2");
-  if (title) title.innerHTML = `📄 سجل الخدمة البحرية – <span style="color:#007BFF">${empData.name}</span>`;
-}
-modal.setAttribute("data-employee-name", empData.name);
-    const tableBody = document.getElementById("seaTimeTableBody");
+  if (!modal || !tableBody) {
+    console.error("❌ لم يتم العثور على عناصر النافذة.");
+    return;
+  }
 
-    if (!modal || !tableBody) {
-        console.error("❌ لم يتم العثور على عناصر النافذة.");
-        return;
+  // ✅ جلب اسم الموظف
+  const { data: empData, error: empError } = await supabase
+    .from("crew_list")
+    .select("name")
+    .eq("id", employeeId)
+    .single();
+
+  // ✅ جلب الرتبة الأصلية من crew_list
+  const { data: crewData } = await supabase
+    .from("crew_list")
+    .select("id, rank")
+    .eq("id", employeeId)
+    .single();
+
+  if (!empError && empData) {
+    const title = modal.querySelector("h2");
+    if (title) {
+      title.innerHTML = `📄 سجل الخدمة البحرية – <span style="color:#007BFF">${empData.name}</span>`;
     }
+    modal.setAttribute("data-employee-name", empData.name);
+  }
 
-    // ✅ تفريغ البيانات السابقة
-    tableBody.innerHTML = "";
+  tableBody.innerHTML = "";
 
-    // ✅ جلب البيانات من جدول history حسب employee_id
-    const { data, error } = await supabase
-        .from("history")
-        .select("*")
-        .eq("employee_id", employeeId)
-        .order("join_date", { ascending: false });
+  // ✅ جلب سجل الخدمة
+  const { data, error } = await supabase
+    .from("history")
+    .select("*")
+    .eq("employee_id", employeeId);
 
-    if (error) {
-        console.error("❌ فشل في جلب السجل:", error);
-        tableBody.innerHTML = "<tr><td colspan='5'>حدث خطأ أثناء تحميل البيانات</td></tr>";
-        modal.style.display = "block";
-        return;
-    }
-
-    if (!data || data.length === 0) {
-        tableBody.innerHTML = "<tr><td colspan='5'>لا يوجد سجل لهذا الموظف</td></tr>";
-    } else {
-        data.forEach(entry => {
-            let row = document.createElement("tr");
-const formattedRow = `
-  صعد على الناقلة <strong>${entry.ship}</strong> من 
-  <strong>${entry.join_date}</strong> إلى 
-  <strong>${entry.leave_date}</strong> 
-  لمدة <strong>${entry.duration}</strong> يوم
-  <button onclick="deleteHistoryRecord('${entry.id}')" style="margin-right: 10px; color: red;">🗑 حذف</button>
-`;
-
-row.innerHTML = `
-  <td>${entry.ship || "-"}</td>
-  <td>${entry.status || "-"}</td>
-  <td>${entry.join_date || "-"}</td>
-  <td>${entry.leave_date || "-"}</td>
-  <td>${entry.duration ?? "-"}</td>
-  <td>${entry.rank || "-"}</td>
-  <td><button onclick="deleteHistoryRecord('${entry.id}')" style="color: red;">🗑</button></td>
-`;
-            tableBody.appendChild(row);
-        });
-    }
-
-    // ✅ عرض النافذة
+  if (error) {
+    console.error("❌ فشل في جلب السجل:", error);
+    tableBody.innerHTML = "<tr><td colspan='7'>حدث خطأ أثناء تحميل البيانات</td></tr>";
     modal.style.display = "block";
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    tableBody.innerHTML = "<tr><td colspan='7'>لا يوجد سجل لهذا الموظف</td></tr>";
+  } else {
+    // ✅ ترتيب حسب التاريخ
+    data.sort((a, b) => {
+      const dateA = new Date(a.join_date || a.leave_date || "1900-01-01");
+      const dateB = new Date(b.join_date || b.leave_date || "1900-01-01");
+      return dateA - dateB;
+    });
+
+    const reversedData = [...data].reverse();
+
+    reversedData.forEach((entry) => {
+      const realIndex = data.indexOf(entry);
+      const nextEntry = data[realIndex + 1];
+      const prevEntry = data[realIndex - 1];
+      const duration = getServiceDuration(entry, nextEntry, prevEntry);
+
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${entry.ship || "-"}</td>
+        <td>${entry.status || "-"}</td>
+        <td>${entry.join_date || "-"}</td>
+        <td>${entry.leave_date || "-"}</td>
+        <td>${duration} يوم</td>
+        <td>${crewData?.rank || "-"}</td> <!-- ✅ الرتبة من crew_list فقط -->
+        <td><button onclick="deleteHistoryRecord('${entry.id}')" style="color: red;">🗑</button></td>
+      `;
+      tableBody.appendChild(row);
+    });
+  }
+
+  modal.style.display = "block";
 }
 
 async function deleteHistoryRecord(historyId) {
@@ -363,51 +425,66 @@ function setSelectedFilters(filterId, selectedValues) {
     }
 }
 
-// ✅ عرض الموظفين في جدول
+// ✅ عرض الموظفين في جدول - نسخة محسّنة لحساب المدد تلقائياً
 function displayEmployees(employees) {
-    const tableBody = document.getElementById("employee-table-body");
-    if (!tableBody) {
-        console.error("❌ العنصر employee-table-body غير موجود في الصفحة.");
-        return;
-    }
-    tableBody.innerHTML = "";
+  const tableBody = document.getElementById("employee-table-body");
+  if (!tableBody) {
+      console.error("❌ العنصر employee-table-body غير موجود في الصفحة.");
+      return;
+  }
+  tableBody.innerHTML = "";
 
-    // فرز البيانات حسب الترتيب المفضل للرتب
-    employees.sort((a, b) => rankOrder.indexOf(a.rank) - rankOrder.indexOf(b.rank));
+  // فرز البيانات حسب الترتيب المفضل للرتب
+  employees.sort((a, b) => rankOrder.indexOf(a.rank) - rankOrder.indexOf(b.rank));
 
-    employees.forEach((crew, index) => {
-        let leaveDuration = calculateDuration(crew.leave_date, new Date()); // حساب مدة النزول
-        let row = document.createElement("tr");
+  employees.forEach((crew, index) => {
+      let leaveDuration = 0;
+      let joinDuration = 0;
 
-        row.innerHTML = `
-            <td>${index + 1}</td>
-            <td>${crew.name ?? "غير معروف"}</td>
-            <td>${crew.rank ?? "غير معروف"}</td>
-            <td>${crew.ship ?? "غير معروف"}</td>
-            <td>${crew.join_date ?? "غير متوفر"}</td>
-            <td>${calculateDuration(crew.join_date, crew.leave_date)} يوم</td>
-            <td>${crew.leave_date ?? "غير متوفر"}</td>
-            <td class="leave-duration">${leaveDuration} يوم</td>
-            <td>${crew.status ?? "غير معروف"}</td>
-            <td>${crew.note ?? "-"}</td>
-            <td><td>
-  <button class="action-btn btn-edit" onclick="editCrewMember('${crew.id}')">✏ تعديل</button>
-  <button class="action-btn btn-delete" onclick="deleteCrewMember('${crew.id}')">🗑 حذف</button>
-  <button class="action-btn btn-history" onclick="showSeaTime('${crew.id}')">📄 السجل</button>
-  <button class="action-btn btn-profile" onclick="showEmployeeProfile('${crew.id}')">📋 ملف الموظف</button>
-</td>
-            </td>
-        `;
+      const today = new Date();
+      const joinDate = crew.join_date ? new Date(crew.join_date) : null;
+      const leaveDate = crew.leave_date ? new Date(crew.leave_date) : null;
 
-        // ✅ إذا كانت مدة النزول أكبر من 60 يومًا، يتم تغيير لون الخلية
-        let leaveCell = row.querySelector(".leave-duration");
-        if (parseInt(leaveDuration) > 60) {
-            leaveCell.style.backgroundColor = "#ffcccc"; // خلفية حمراء فاتحة
-            leaveCell.style.color = "red"; // خط أحمر داكن
-        }
+      // ✅ حساب الذكي للمدد بناءً على التواريخ المتوفرة
+      if (joinDate && !leaveDate) {
+          joinDuration = calculateDuration(joinDate, today);
+      } else if (joinDate && leaveDate) {
+          joinDuration = calculateDuration(joinDate, leaveDate);
+          leaveDuration = calculateDuration(leaveDate, today);
+      } else if (!joinDate && leaveDate) {
+          leaveDuration = calculateDuration(leaveDate, today);
+      }
 
-        tableBody.appendChild(row);
-    });
+      let row = document.createElement("tr");
+
+      row.innerHTML = `
+          <td>${index + 1}</td>
+          <td>${crew.name ?? "غير معروف"}</td>
+          <td>${crew.rank ?? "غير معروف"}</td>
+          <td>${crew.ship ?? "غير معروف"}</td>
+          <td>${crew.join_date ?? "غير متوفر"}</td>
+          <td>${joinDuration} يوم</td>
+          <td>${crew.leave_date ?? "غير متوفر"}</td>
+          <td class="leave-duration">${leaveDuration} يوم</td>
+          <td>${crew.status ?? "غير معروف"}</td>
+          <td>${crew.note ?? "-"}</td>
+          <td><td>
+            <button class="action-btn btn-edit" onclick="editCrewMember('${crew.id}')">✏ تعديل</button>
+            <button class="action-btn btn-delete" onclick="deleteCrewMember('${crew.id}')">🗑 حذف</button>
+            <button class="action-btn btn-history" onclick="showSeaTime('${crew.id}')">📄 السجل</button>
+            <button class="action-btn btn-profile" onclick="showEmployeeProfile('${crew.id}')">📋 ملف الموظف</button>
+          </td>
+      `;
+
+      // ✅ إذا كانت مدة النزول أكبر من 60 يومًا، يتم تغيير لون الخلية
+      let leaveCell = row.querySelector(".leave-duration");
+      if (parseInt(leaveDuration) > 60) {
+          leaveCell.style.backgroundColor = "#ffcccc"; // خلفية حمراء فاتحة
+          leaveCell.style.color = "red"; // خط أحمر داكن
+      }
+
+      tableBody.appendChild(row);
+  });
 }
 
 // ✅ دالة فرز البيانات بناءً على المدة
@@ -432,6 +509,63 @@ function sortByDuration(type) {
 
     // إعادة ترتيب الصفوف
     rows.forEach(row => tableBody.appendChild(row));
+}
+
+function addNewItem(type) {
+  const labels = {
+    rank: "الرتبة",
+    ship: "الناقلة",
+    status: "الحالة"
+  };
+
+  const containerId = {
+    rank: "ranks-container",
+    ship: "ships-container",
+    status: "status-container"
+  };
+
+  const label = labels[type];
+  const container = document.getElementById(containerId[type]);
+
+  const newItem = prompt(`📝 أدخل ${label} جديدة:`);
+  if (!newItem) return;
+
+  const div = document.createElement("div");
+  const checkbox = document.createElement("input");
+  checkbox.type = "checkbox";
+  checkbox.id = `${type}-${newItem}`;
+  checkbox.value = newItem;
+  checkbox.checked = true;
+
+  const labelEl = document.createElement("label");
+  labelEl.setAttribute("for", checkbox.id);
+  labelEl.textContent = newItem;
+
+  div.appendChild(checkbox);
+  div.appendChild(labelEl);
+
+  container.appendChild(div);
+
+  alert(`✅ تم إضافة ${label}: ${newItem}`);
+}
+
+function promptAddOption(type) {
+  const labelMap = {
+    ship: "الناقلة",
+    rank: "الرتبة",
+    status: "الحالة"
+  };
+
+  const newOption = prompt(`اكتب ${labelMap[type]} الجديدة:`);
+  if (!newOption) return;
+
+  const select = document.getElementById(`filter-${type}`);
+  const option = document.createElement("option");
+  option.value = newOption;
+  option.textContent = newOption;
+  select.appendChild(option);
+
+  alert(`✅ تمّت إضافة ${labelMap[type]}: ${newOption}`);
 }
 
 // ✅ التأكد من وجود حاوية الفلاتر الأساسية: .filters-container
@@ -677,25 +811,34 @@ const changed =
     oldData.join_date !== joinDate ||
     oldData.leave_date !== leaveDate;
 
-if (changed) {
-    console.log("🧪 مدة الخدمة المحسوبة:", calculateDuration(joinDate, leaveDate)); // ← تضيفه هنا
-
-    await supabase.from("history").insert([
-        {
-            employee_id: memberId,
-            ship,
-            status,
-            join_date: joinDate || null,
-            leave_date: leaveDate || null,
-            duration: parseInt(calculateDuration(joinDate, leaveDate)) || 0,
-        },
-    ]);
-
-    console.log("✅ تمت إضافة سجل جديد إلى جدول history");
+    if (changed) {
+      let historyRecord = {
+          employee_id: memberId,
+          ship,
+          status,
+          join_date: joinDate || null,
+          leave_date: leaveDate || null,
+      };
+  
+      // 🧠 حساب المدة حسب حالة البيانات
+if (joinDate && leaveDate) {
+  historyRecord.duration = parseInt(calculateDuration(joinDate, leaveDate)) || 0;
+} else if (joinDate && !leaveDate) {
+  historyRecord.duration = parseInt(calculateDuration(joinDate, new Date())) || 0;
+} else if (!joinDate && leaveDate) {
+  historyRecord.duration = parseInt(calculateDuration(leaveDate, new Date())) || 0;
+} else {
+  historyRecord.duration = 0;
 }
+  
+      await supabase.from("history").insert([historyRecord]);
+  
+      console.log("✅ تمت إضافة سجل جديد إلى جدول history");
+  }  
 
 alert("✅ تم تحديث الموظف بنجاح.");
 closeEditModal();
+await recalculateHistoryDurations(memberId);
 loadEmployees(() => {
     setSelectedFilters("filter-rank", selectedRanks);
     setSelectedFilters("filter-ship", selectedShips);
@@ -704,6 +847,54 @@ loadEmployees(() => {
 });
             }
         });
+}
+
+async function recalculateHistoryDurations(employeeId) {
+  const { data: history, error } = await supabase
+    .from("history")
+    .select("*")
+    .eq("employee_id", employeeId)
+    .order("join_date", { ascending: false }) // ترتيب تنازلي حسب تاريخ الصعود
+    .order("leave_date", { ascending: false }); // ولو ماكو صعود نستخدم النزول
+
+  if (error) {
+    console.error("❌ فشل في جلب سجل الخدمة:", error.message);
+    return;
+  }
+
+  let updates = [];
+
+  for (let i = 0; i < history.length; i++) {
+    const current = history[i];
+    const next = history[i + 1];
+
+    let duration = 0;
+
+    if (current.join_date && !current.leave_date && next && next.leave_date) {
+      duration = calculateDuration(current.join_date, next.leave_date); // صعود إلى نزول التالي
+    } else if (!current.join_date && current.leave_date && next && next.join_date) {
+      duration = calculateDuration(next.join_date, current.leave_date); // صعود السابق إلى نزولي
+    } else if (current.join_date && current.leave_date) {
+      duration = calculateDuration(current.join_date, current.leave_date); // طبيعي
+    } else {
+      duration = 0; // ما نكدر نحسب
+    }
+
+    updates.push({
+      id: current.id,
+      duration: parseInt(duration),
+    });
+  }
+
+  // 📝 إرسال التحديثات كلها
+  for (let update of updates) {
+    await supabase
+      .from("history")
+      .update({ duration: update.duration })
+      .eq("id", update.id);
+  }
+
+  console.log("✅ تم تحديث مدد سجل الخدمة تلقائياً");
 }
 
 async function editCrewMember(crewId) {
@@ -1120,6 +1311,31 @@ function generatePrintSummary() {
     document.querySelector(".summary-table-print").style.display = "table";
 }
 
+function getSelectedItems(containerId) {
+  const checkboxes = document.querySelectorAll(`#${containerId} input[type="checkbox"]:checked`);
+  return Array.from(checkboxes).map(cb => cb.value);
+}
+
+function generateFilterSummaryHTML() {
+  const selectedRanks = getSelectedItems('ranks-container');
+  const selectedShips = getSelectedItems('ships-container');
+  const selectedStatuses = getSelectedItems('status-container');
+
+  let summary = "";
+
+  if (selectedRanks.length > 0) {
+    summary += `🎖 الرتب: ${selectedRanks.join(", ")}<br>`;
+  }
+  if (selectedShips.length > 0) {
+    summary += `⛴️ الناقلات: ${selectedShips.join(", ")}<br>`;
+  }
+  if (selectedStatuses.length > 0) {
+    summary += `🟢 الحالات: ${selectedStatuses.join(", ")}<br>`;
+  }
+
+  return summary || "لا توجد فلاتر مفعّلة.";
+}
+
 function printFilteredData() {
     updateSummaryTable(); // تحديث ملخص الطاقم بناءً على البيانات المفلترة
 
@@ -1148,6 +1364,7 @@ function printFilteredData() {
         </head>
         <body>
             <h2>ملخص الطاقم حسب الفلترة</h2>
+            <div style="margin: 10px 0; font-size: 15px;">${generateFilterSummaryHTML()}</div>
             <table class="summary-table">
                 <thead>
                     <tr>
@@ -1401,6 +1618,27 @@ function sortByLeaveDuration(order) {
   });
 
   rows.forEach((row) => tableBody.appendChild(row));
+}
+
+function updatePrintFiltersSummary() {
+  const selectedRanks = getSelectedItems('ranks-container');
+  const selectedShips = getSelectedItems('ships-container');
+  const selectedStatuses = getSelectedItems('status-container');
+
+  let summary = "";
+
+  if (selectedRanks.length > 0) {
+    summary += `🎖 الرتب: ${selectedRanks.join(", ")}<br>`;
+  }
+  if (selectedShips.length > 0) {
+    summary += `⛴️ الناقلات: ${selectedShips.join(", ")}<br>`;
+  }
+  if (selectedStatuses.length > 0) {
+    summary += `🟢 الحالات: ${selectedStatuses.join(", ")}<br>`;
+  }
+
+  document.getElementById("print-filter-summary").style.display = "block";
+  document.getElementById("filter-details-print").innerHTML = summary;
 }
 
 // ✅ عند تشغيل الصفحة
