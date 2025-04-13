@@ -468,12 +468,12 @@ function displayEmployees(employees) {
           <td class="leave-duration">${leaveDuration} يوم</td>
           <td>${crew.status ?? "غير معروف"}</td>
           <td>${crew.note ?? "-"}</td>
-          <td><td>
-            <button class="action-btn btn-edit" onclick="editCrewMember('${crew.id}')">✏ تعديل</button>
-            <button class="action-btn btn-delete" onclick="deleteCrewMember('${crew.id}')">🗑 حذف</button>
-            <button class="action-btn btn-history" onclick="showSeaTime('${crew.id}')">📄 السجل</button>
-            <button class="action-btn btn-profile" onclick="showEmployeeProfile('${crew.id}')">📋 ملف الموظف</button>
-          </td>
+          <td class="actions-cell">
+  <button class="action-btn btn-edit" onclick="editCrewMember('${crew.id}')">✏ تعديل</button>
+  <button class="action-btn btn-delete" onclick="deleteCrewMember('${crew.id}')">🗑 حذف</button>
+  <button class="action-btn btn-history" onclick="showSeaTime('${crew.id}')">📄 السجل</button>
+  <button class="action-btn btn-profile" onclick="showEmployeeProfile('${crew.id}')">📋 ملف الموظف</button>
+</td>
       `;
 
       // ✅ إذا كانت مدة النزول أكبر من 60 يومًا، يتم تغيير لون الخلية
@@ -1394,11 +1394,12 @@ function printFilteredData() {
                     </tr>
                 </thead>
                 <tbody>
-                    ${filteredRows.map(row => {
-                        let rowHTML = row.cloneNode(true); // استنساخ الصف
-                        rowHTML.removeChild(rowHTML.lastElementChild); // إزالة عمود الإجراءات
-                        return `<tr>${rowHTML.innerHTML}</tr>`;
-                    }).join('')}
+                ${filteredRows.map(row => {
+                  let cells = row.querySelectorAll("td");
+                  let limitedCells = Array.from(cells).slice(0, 10); // ✅ أول 10 خلايا فقط
+                  let rowHtml = limitedCells.map(cell => `<td>${cell.innerHTML}</td>`).join('');
+                  return `<tr>${rowHtml}</tr>`;
+                }).join('')}                
                 </tbody>
             </table>
         </body>

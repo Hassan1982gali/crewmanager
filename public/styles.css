@@ -320,3 +320,38 @@ th button:hover {
         page-break-before: always; /* ✅ يجعله يظهر مرة واحدة فقط */
     }
 }
+
+@media print {
+    #employee-table th:nth-child(11),
+    #employee-table td:nth-child(11) {
+      display: none !important;
+    }
+  }
+
+  .table-container {
+    max-height: 500px; /* ✳️ تقدر تغيّره حسب طول الصفحة */
+    overflow-y: auto;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+  }
+  
+  /* ✳️ حتى يبقى رأس الجدول ثابت */
+  .table-container thead th {
+    position: sticky;
+    top: 0;
+    background-color: #007bff;
+    color: white;
+    z-index: 10;
+  }
+  
+  .page-title {
+    font-size: 20px;
+    color: #0d47a1;
+    margin: 10px 0 0;
+  }
+  
+  .page-subtitle {
+    font-size: 16px;
+    color: #0d47a1;
+    margin: 5px 0 20px;
+  }  
