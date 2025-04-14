@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ar">
-<head>
+  <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ادارة طواقم شركة ناقلات النفط العراقية</title>
@@ -323,9 +323,9 @@
   <button class="utility-btn btn-logout" onclick="logout()">🚪 تسجيل الخروج</button>
   <h2 class="page-title">ادارة طواقم شركة ناقلات النفط العراقية</h2>
   <h3 class="page-subtitle">شعبة التطقيم - حسن غالي شلال</h3>  
-    <button id="install-app-btn" class="utility-btn no-print" style="display: none; background-color: #1a237e; color: white; padding: 10px 20px; border: none; border-radius: 8px; font-size: 13px; margin: 20px auto; display: block;">
-      📲 تثبيت التطبيق
-    </button>    
+  <button id="install-app-btn" class="utility-btn no-print install-btn" style="display: none;" title="انقر هنا لتثبيت التطبيق على جهازك 📲">
+    <span class="pulse-icon">📲</span> تثبيت التطبيق
+  </button>   
     
     <table class="summary-table">
         <thead>
@@ -352,14 +352,9 @@
               <button onclick="applyFilters()">OK</button>
               <button onclick="clearFilters('ranks-container')">Cancel</button>
             </div>
-            <div style="margin-top: 10px; text-align: left;">
-              <button onclick="addNewItem('rank')" style="background-color: #2196f3; color: white; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer;">
-                ➕ إضافة رتبة جديدة
-              </button>
-            </div>            
           </div>
         </div>
-      </div>
+      </div>      
     
       <!-- 🚢 الناقلات -->
       <div class="filter-group">

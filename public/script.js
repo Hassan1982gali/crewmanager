@@ -579,127 +579,16 @@ function ensureFiltersContainer() {
   }
 }
 
-// ✅ دالة تحميل الرتب للفلاتر (checkboxes)
-async function loadRanksFilter() {
-  console.log("🚀 تحميل الرتب للفلاتر...");
-  const { data, error } = await supabase.from("crew_list").select("rank");
+async function loadFilterOptions(column, containerId) {
+  console.log(`🚀 تحميل ${column} للفلاتر...`);
+  const { data, error } = await supabase.from("crew_list").select(column);
   if (error) {
-    console.error("❌ خطأ أثناء جلب الرتب:", error);
+    console.error(`❌ خطأ أثناء جلب ${column}:`, error);
     return;
   }
 
-  let rankContainer = document.querySelector("#ranks-container");
-  if (!rankContainer) {
-    console.warn("⚠ العنصر #ranks-container غير موجود في HTML، سيتم إنشاؤه تلقائيًا.");
-    let filtersContainer = document.querySelector(".filters-container");
-    if (!filtersContainer) {
-      console.error("❌ لم يتم العثور على .filters-container في الصفحة.");
-      return;
-    }
-    rankContainer = document.createElement("div");
-    rankContainer.id = "ranks-container";
-    filtersContainer.appendChild(rankContainer);
-  }
-
-  rankContainer.innerHTML = "";
-  let uniqueRanks = [...new Set(data.map((crew) => crew.rank.trim()).filter((r) => r))];
-  uniqueRanks.forEach((rank) => {
-    let checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.id = `rank-${rank}`;
-    checkbox.value = rank;
-    checkbox.addEventListener("change", filterCrew);
-
-    let label = document.createElement("label");
-    label.htmlFor = checkbox.id;
-    label.textContent = rank;
-
-    rankContainer.appendChild(checkbox);
-    rankContainer.appendChild(label);
-  });
-
-  console.log("✅ تم تحميل الرتب بنجاح:", uniqueRanks);
-}
-
-// ✅ دالة تحميل الناقلات للفلاتر (checkboxes)
-async function loadShipsFilter() {
-  console.log("🚀 تحميل أسماء الناقلات للفلاتر...");
-  const { data, error } = await supabase.from("crew_list").select("ship");
-  if (error) {
-    console.error("❌ خطأ أثناء جلب الناقلات:", error);
-    return;
-  }
-
-  let shipContainer = document.querySelector("#ships-container");
-  if (!shipContainer) {
-    console.warn("⚠ العنصر #ships-container غير موجود في HTML، سيتم إنشاؤه تلقائيًا.");
-    let filtersContainer = document.querySelector(".filters-container");
-    if (!filtersContainer) {
-      console.error("❌ لم يتم العثور على .filters-container في الصفحة.");
-      return;
-    }
-    shipContainer = document.createElement("div");
-    shipContainer.id = "ships-container";
-    filtersContainer.appendChild(shipContainer);
-  }
-
-  shipContainer.innerHTML = "";
-  let uniqueShips = [...new Set(data.map((crew) => crew.ship).filter((s) => s))];
-
-  uniqueShips.forEach((ship) => {
-    let checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.id = `ship-${ship}`;
-    checkbox.value = ship;
-    checkbox.addEventListener("change", filterCrew);
-
-    let label = document.createElement("label");
-    label.htmlFor = checkbox.id;
-    label.textContent = ship;
-
-    shipContainer.appendChild(checkbox);
-    shipContainer.appendChild(label);
-  });
-}
-
-// ✅ دالة تحميل الحالات للفلاتر (checkboxes)
-async function loadStatusFilter() {
-  console.log("🚀 تحميل الحالات للفلاتر...");
-  const { data, error } = await supabase.from("crew_list").select("status");
-  if (error) {
-    console.error("❌ خطأ أثناء جلب الحالات:", error);
-    return;
-  }
-
-  let statusContainer = document.querySelector("#status-container");
-  if (!statusContainer) {
-    console.warn("⚠ العنصر #status-container غير موجود في HTML، سيتم إنشاؤه تلقائيًا.");
-    let filtersContainer = document.querySelector(".filters-container");
-    if (!filtersContainer) {
-      console.error("❌ لم يتم العثور على .filters-container في الصفحة.");
-      return;
-    }
-    statusContainer = document.createElement("div");
-    statusContainer.id = "status-container";
-    filtersContainer.appendChild(statusContainer);
-  }
-
-  statusContainer.innerHTML = "";
-  let uniqueStatuses = [...new Set(data.map((crew) => crew.status).filter((st) => st))];
-  uniqueStatuses.forEach((status) => {
-    let checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.id = `status-${status}`;
-    checkbox.value = status;
-    checkbox.addEventListener("change", filterCrew);
-
-    let label = document.createElement("label");
-    label.htmlFor = checkbox.id;
-    label.textContent = status;
-
-    statusContainer.appendChild(checkbox);
-    statusContainer.appendChild(label);
-  });
+  const uniqueValues = [...new Set(data.map(row => row[column]).filter(Boolean))];
+  populateFilterDropdown(containerId, uniqueValues);
 }
 
 // ✅ تحديث الملخص بعد كل فلترة
@@ -1076,37 +965,49 @@ function closeEditModal() {
 }
 
 function populateFilterDropdown(containerId, values) {
-    let container = document.getElementById(containerId);
-    if (!container) return;
-    container.innerHTML = "";
-    values.forEach(value => {
-        let div = document.createElement("div");
-        div.classList.add("checkbox-item");
+  const container = document.getElementById(containerId);
+  if (!container) return;
 
-        let checkbox = document.createElement("input");
-        checkbox.type = "checkbox";
-        checkbox.value = value;
-        checkbox.id = `${containerId}-${value}`;
-        checkbox.addEventListener("change", filterCrew);
+  container.innerHTML = ""; // تنظيف الحاوية
 
-        let label = document.createElement("label");
-        label.htmlFor = checkbox.id;
-        label.textContent = value;
+  values.forEach(value => {
+    // ✅ إنشاء label يحتضن checkbox + النص (أفضل تنسيق)
+    const label = document.createElement("label");
+    label.classList.add("checkbox-option");
+    label.setAttribute("for", `${containerId}-${value}`);
 
-        div.appendChild(checkbox);
-        div.appendChild(label);
-        container.appendChild(div);
-    });
+    // ✅ إنشاء الجيك بوكس
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.id = `${containerId}-${value}`;
+    checkbox.value = value;
+    checkbox.addEventListener("change", filterCrew); // فلترة مباشرة عند التغيير
+
+    // ✅ إضافة النص بجانب الجيك
+    const text = document.createTextNode(value);
+
+    // ✅ ترتيبهم داخل الـ label
+    label.appendChild(checkbox);
+    label.appendChild(text);
+
+    // ✅ إضافة الـ label إلى القائمة
+    container.appendChild(label);
+  });
 }
 
 // ✅ تصفية القائمة المنسدلة بناءً على البحث
 function filterDropdown(containerId, inputElement) {
-    let filter = inputElement.value.toLowerCase();
-    let items = document.querySelectorAll(`#${containerId} div`);
-    items.forEach(item => {
-        let label = item.querySelector("label").textContent.toLowerCase();
-        item.style.display = label.includes(filter) ? "" : "none";
-    });
+  const filter = inputElement.value.toLowerCase();
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  const labels = container.querySelectorAll("label");
+
+  labels.forEach(label => {
+    const text = label.textContent.toLowerCase();
+    const match = text.includes(filter);
+    label.style.display = match ? "flex" : "none"; // ✅ يختفي أو يظهر حسب البحث
+  });
 }
 
 // ✅ تطبيق الفلترة عند الضغط على OK
@@ -1145,9 +1046,15 @@ function clearFilters(containerId) {
     filterCrew(); // ✅ إعادة تحميل كل البيانات
 }
 
-// ✅ تحميل الفلاتر عند تشغيل الصفحة
+// ✅ تحميل الموظفين والفلاتر عند تشغيل الصفحة
 document.addEventListener("DOMContentLoaded", () => {
-    loadFilters();
+  loadEmployees(); // تحميل بيانات الموظفين
+  ensureFiltersContainer(); // يتأكد من وجود .filters-container
+
+  // ✅ تحميل الفلاتر باستخدام الدالة الموحدة
+  loadFilterOptions("rank", "ranks-container");
+  loadFilterOptions("ship", "ships-container");
+  loadFilterOptions("status", "status-container");
 });
 
 // ✅ إظهار نافذة إضافة موظف وتحميل البيانات
@@ -1223,22 +1130,26 @@ async function saveNewCrewMember() {
 window.saveNewCrewMember = saveNewCrewMember;
 
 // ✅ تحميل الفلاتر عند تشغيل الصفحة
-async function loadFilters() {
-    console.log("🚀 تحميل بيانات الفلاتر...");
-    const { data, error } = await supabase.from("crew_list").select("rank, ship, status");
-    if (error) {
-        console.error("❌ خطأ أثناء جلب الفلاتر:", error);
-        return;
-    }
+async function loadFilterOptions(column, containerId) {
+  console.log(`🚀 تحميل ${column} للفلاتر...`);
+  const { data, error } = await supabase.from("crew_list").select(column);
 
-    let ranks = [...new Set(data.map(crew => crew.rank).filter(Boolean))];
-    let ships = [...new Set(data.map(crew => crew.ship).filter(Boolean))];
-    let statuses = [...new Set(data.map(crew => crew.status).filter(Boolean))];
+  if (error) {
+    console.error(`❌ خطأ أثناء جلب ${column}:`, error);
+    return;
+  }
 
-    populateFilterDropdown("ranks-container", ranks);
-    populateFilterDropdown("ships-container", ships);
-    populateFilterDropdown("status-container", statuses);
+  const container = document.getElementById(containerId);
+  if (!container) {
+    console.error(`❌ لم يتم العثور على العنصر: #${containerId}`);
+    return;
+  }
+
+  const uniqueValues = [...new Set(data.map(item => item[column]).filter(Boolean))];
+
+  populateFilterDropdown(containerId, uniqueValues);
 }
+
 
 function toggleDropdown(dropdownId) {
     console.log("تم النقر على زر الفلتر:", dropdownId); // 🔍 التحقق من النقر على الزر
@@ -1645,10 +1556,10 @@ function updatePrintFiltersSummary() {
 // ✅ عند تشغيل الصفحة
 document.addEventListener("DOMContentLoaded", () => {
   loadEmployees();
-  ensureFiltersContainer();   // يضمن وجود .filters-container
-  loadRanksFilter();          // يحمّل رتب الطاقم
-  loadShipsFilter();          // يحمّل أسماء الناقلات
-  loadStatusFilter();         // يحمّل حالات الطاقم
+  ensureFiltersContainer();   // تأكد أن الحاوية موجودة
+  loadFilterOptions("rank", "ranks-container");
+  loadFilterOptions("ship", "ships-container");
+  loadFilterOptions("status", "status-container");
 });
 
 // ✅ جعل الدوال متاحة عالميًا
