@@ -196,22 +196,28 @@ function smartServiceDuration(joinDate, leaveDate, status) {
   return 0;
 }
 
-// ✅ تحميل بيانات الطاقم
+// ✅ تحميل بيانات الطاقم مع سجل الخدمة
 async function loadEmployees(callback = null) {
-    console.log("🚀 تحميل بيانات الطاقم...");
-    const { data, error } = await supabase
-        .from("crew_list")
-        .select("id, name, rank, ship, join_date, join_duration, leave_date, leave_duration, status, note");
+  console.log("🚀 تحميل بيانات الطاقم...");
 
-    if (error) {
-        console.error("❌ خطأ أثناء جلب البيانات:", error);
-        return;
-    }
+  // جلب بيانات الطاقم
+  const { data: employees, error } = await supabase
+    .from("crew_list")
+    .select("id, name, rank, ship, join_date, join_duration, leave_date, leave_duration, status, note");
 
-    displayEmployees(data);
+  if (error) {
+    console.error("❌ خطأ أثناء جلب بيانات الطاقم:", error);
+    return;
+  }
 
-    // ✅ تنفيذ الكولباك بعد تحميل البيانات (لتطبيق الفلاتر بعد التحديث)
-    if (callback) callback();
+  // جلب سجل الخدمة لكل موظف
+  const historyMap = await loadHistory();
+
+  // عرض الموظفين مع سجل الخدمة
+  displayEmployees(employees, historyMap);
+
+  // تنفيذ الفلترة إذا موجودة
+  if (callback) callback();
 }
 
 async function addCertificate() {
@@ -425,72 +431,140 @@ function setSelectedFilters(filterId, selectedValues) {
     }
 }
 
-// ✅ عرض الموظفين في جدول - نسخة محسّنة لحساب المدد تلقائياً
-function displayEmployees(employees) {
+// ✅ عرض الموظفين في جدول - نسخة محسّنة لحساب المدد وتحديث الملاحظات والخدمة السابقة
+function displayEmployees(employees, historyMap = new Map()) {
   const tableBody = document.getElementById("employee-table-body");
   if (!tableBody) {
-      console.error("❌ العنصر employee-table-body غير موجود في الصفحة.");
-      return;
+    console.error("❌ العنصر employee-table-body غير موجود في الصفحة.");
+    return;
   }
   tableBody.innerHTML = "";
 
   // فرز البيانات حسب الترتيب المفضل للرتب
   employees.sort((a, b) => rankOrder.indexOf(a.rank) - rankOrder.indexOf(b.rank));
 
+  const fragment = document.createDocumentFragment();
+
   employees.forEach((crew, index) => {
-      let leaveDuration = 0;
-      let joinDuration = 0;
+    // ✅ تجهيز الخدمة السابقة كدوائر
+    let historyHTML = "";
+    const historyRecords = historyMap.get(String(crew.id)) || [];
+const hideRest = document.getElementById("toggle-rest-filter")?.checked;
 
-      const today = new Date();
-      const joinDate = crew.join_date ? new Date(crew.join_date) : null;
-      const leaveDate = crew.leave_date ? new Date(crew.leave_date) : null;
+historyRecords.forEach(record => {
+  const ship = record.ship ?? "غير معروفة";
+  if (!hideRest && ship === "استراحة") return;
 
-      // ✅ حساب الذكي للمدد بناءً على التواريخ المتوفرة
-      if (joinDate && !leaveDate) {
-          joinDuration = calculateDuration(joinDate, today);
-      } else if (joinDate && leaveDate) {
-          joinDuration = calculateDuration(joinDate, leaveDate);
-          leaveDuration = calculateDuration(leaveDate, today);
-      } else if (!joinDate && leaveDate) {
-          leaveDuration = calculateDuration(leaveDate, today);
-      }
+  if (record.duration && record.duration > 0) {
+    historyHTML += `<span class="history-badge">${ship} ${record.duration}</span> `;
+  } else {
+    historyHTML += `<span class="history-badge gray" title="لا توجد مدة مسجلة">${ship}</span> `;
+  }
+});
 
-      let row = document.createElement("tr");
+    let leaveDuration = 0;
+    let joinDuration = 0;
 
-      row.innerHTML = `
-          <td>${index + 1}</td>
-          <td>${crew.name ?? "غير معروف"}</td>
-          <td>${crew.rank ?? "غير معروف"}</td>
-          <td>${crew.ship ?? "غير معروف"}</td>
-          <td>${crew.join_date ?? "غير متوفر"}</td>
-          <td>${joinDuration} يوم</td>
-          <td>${crew.leave_date ?? "غير متوفر"}</td>
-          <td class="leave-duration">${leaveDuration} يوم</td>
-          <td>${crew.status ?? "غير معروف"}</td>
-          <td>${crew.note ?? "-"}</td>
-          <td class="actions-cell">
-  <button class="action-btn btn-edit" onclick="editCrewMember('${crew.id}')">✏ تعديل</button>
-  <button class="action-btn btn-delete" onclick="deleteCrewMember('${crew.id}')">🗑 حذف</button>
-  <button class="action-btn btn-history" onclick="showSeaTime('${crew.id}')">📄 السجل</button>
-  <button class="action-btn btn-profile" onclick="showEmployeeProfile('${crew.id}')">📋 ملف الموظف</button>
+    const today = new Date();
+    const joinDate = crew.join_date ? new Date(crew.join_date) : null;
+    const leaveDate = crew.leave_date ? new Date(crew.leave_date) : null;
+
+    if (joinDate && !leaveDate) {
+      joinDuration = calculateDuration(joinDate, today);
+    } else if (joinDate && leaveDate) {
+      joinDuration = calculateDuration(joinDate, leaveDate);
+      leaveDuration = calculateDuration(leaveDate, today);
+    } else if (!joinDate && leaveDate) {
+      leaveDuration = calculateDuration(leaveDate, today);
+    }
+
+    let row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${index + 1}</td>
+      <td>${crew.name ?? "غير معروف"}</td>
+      <td>${crew.rank ?? "غير معروف"}</td>
+      <td>${crew.ship ?? "غير معروف"}</td>
+      <td>${crew.join_date ?? "غير متوفر"}</td>
+      <td>${joinDuration} يوم</td>
+      <td>${crew.leave_date ?? "غير متوفر"}</td>
+      <td class="leave-duration">${leaveDuration} يوم</td>
+      <td>${crew.status ?? "غير معروف"}</td>
+      <td class="history-col">
+  <div class="history-wrap">
+    ${historyHTML}
+  </div>
 </td>
-      `;
+      <td>
+        <textarea 
+          class="note-field no-print"
+          data-id="${crew.id}"
+          rows="2"
+          style="width: 100%;">${crew.note ?? ""}</textarea>
+        <div class="print-note-only">${(crew.note ?? "").replace(/\n/g, "<br>")}</div>
+      </td>
+      <td class="actions-cell">
+        <button class="action-btn btn-edit" onclick="editCrewMember('${crew.id}')">✏ تعديل</button>
+        <button class="action-btn btn-delete" onclick="deleteCrewMember('${crew.id}')">🗑 حذف</button>
+        <button class="action-btn btn-history" onclick="showSeaTime('${crew.id}')">📄 السجل</button>
+        <button class="action-btn btn-profile" onclick="showEmployeeProfile('${crew.id}')">📋 ملف الموظف</button>
+      </td>
+    `;
 
-      // ✅ إذا كانت مدة النزول أكبر من 60 يومًا، يتم تغيير لون الخلية
-      let leaveCell = row.querySelector(".leave-duration");
-      if (parseInt(leaveDuration) > 60) {
-          leaveCell.style.backgroundColor = "#ffcccc"; // خلفية حمراء فاتحة
-          leaveCell.style.color = "red"; // خط أحمر داكن
-      }
+    const leaveCell = row.querySelector(".leave-duration");
+    if (parseInt(leaveDuration) > 60) {
+      leaveCell.style.backgroundColor = "#ffcccc";
+      leaveCell.style.color = "red";
+    }
 
-      tableBody.appendChild(row);
+    fragment.appendChild(row);
   });
+
+  tableBody.appendChild(fragment);
+
+  setTimeout(() => {
+    document.querySelectorAll(".note-field").forEach((noteField) => {
+      noteField.style.height = "auto";
+      noteField.style.height = noteField.scrollHeight + "px";
+
+      noteField.addEventListener("input", () => {
+        noteField.style.height = "auto";
+        noteField.style.height = noteField.scrollHeight + "px";
+      });
+
+      noteField.addEventListener("blur", async (event) => {
+        const newNote = event.target.value;
+        const crewId = event.target.dataset.id;
+      
+        const { error } = await supabase
+          .from("crew_list")
+          .update({ note: newNote })
+          .eq("id", crewId);
+      
+        if (error) {
+          console.error("❌ فشل في تحديث الملاحظة:", error);
+          alert("حدث خطأ أثناء حفظ الملاحظة!");
+        } else {
+          console.log("✅ تم حفظ الملاحظة!");
+      
+          // ✅ تحديث نسخة الطباعة مباشرة
+          const printNoteDiv = noteField.parentElement.querySelector(".print-note-only");
+          if (printNoteDiv) {
+            printNoteDiv.innerHTML = newNote.replace(/\n/g, "<br>");
+          }
+        }
+      });      
+    });
+  }, 0);
 }
+// ✅ ربط checkbox لإخفاء الاستراحة
+document.getElementById("toggle-rest-filter").addEventListener("change", () => {
+  loadEmployees(); // إعادة تحميل الجدول مع الفلتر الجديد
+});
 
 // ✅ دالة فرز البيانات بناءً على المدة
 let sortOrder = {
-    join_duration: "asc",
-    leave_duration: "asc",
+  join_duration: "asc",
+  leave_duration: "asc",
 };
 
 function sortByDuration(type) {
@@ -881,62 +955,45 @@ async function loadAddModalData() {
     }
 }
 
-// ✅ دالة مساعدة لتعبئة القوائم المنسدلة
+// ✅ دالة ذكية لتعبئة القوائم المنسدلة وتطبيق ترتيب مخصص للرُتب + تفعيل البحث
 function populateDropdown(selectId, values) {
-    let selectElement = document.getElementById(selectId);
-    if (!selectElement) {
-        console.error(`❌ العنصر ${selectId} غير موجود.`);
-        return;
-    }
+  const selectElement = document.getElementById(selectId);
+  if (!selectElement) {
+    console.error(`❌ العنصر ${selectId} غير موجود.`);
+    return;
+  }
 
-    // إزالة القيم السابقة وإضافة الخيار الافتراضي
-    selectElement.innerHTML = `<option value="">اختر</option>`;
+  selectElement.innerHTML = `<option value="">اختر</option>`;
 
-    // التأكد من أن `values` تحتوي على بيانات
-    if (!values || values.length === 0) {
-        console.warn(`⚠ لا توجد بيانات متاحة لـ ${selectId}`);
-        return;
-    }
+  if (!values || !Array.isArray(values)) {
+    console.warn(`⚠ البيانات الممررة إلى ${selectId} ليست مصفوفة.`);
+    return;
+  }
 
-    values.forEach(value => {
-        let option = document.createElement("option");
-        option.value = value;
-        option.textContent = value;
-        selectElement.appendChild(option);
+  // ✅ ترتيب خاص إذا كان الفلتر هو rankFilter
+  if (selectId === "rankFilter" && typeof rankOrder !== "undefined") {
+    values = [...values].sort((a, b) => {
+      return rankOrder.indexOf(a) - rankOrder.indexOf(b);
     });
+  }
 
-    console.log(`✅ تم تعبئة ${selectId} بعدد ${values.length} خيارات.`);
-}
-
-// ✅ دالة تعبئة القوائم المنسدلة في نافذة إضافة الموظف
-function populateDropdown(selectId, values) {
-    let selectElement = document.getElementById(selectId);
-    if (!selectElement) {
-        console.error(`❌ العنصر ${selectId} غير موجود.`);
-        return;
+  values.forEach(value => {
+    if (typeof value === "string") {
+      const option = document.createElement("option");
+      option.value = value.trim();
+      option.textContent = value.trim();
+      selectElement.appendChild(option);
+    } else {
+      console.warn(`⚠ تم العثور على قيمة غير نصية في ${selectId}:`, value);
     }
+  });
 
-    // تنظيف القائمة وإضافة الخيار الافتراضي
-    selectElement.innerHTML = `<option value="">اختر</option>`;
+  console.log(`✅ تم تعبئة ${selectId} بعدد ${values.length} خيارات.`);
 
-    // التأكد من أن `values` تحتوي على بيانات صحيحة
-    if (!values || !Array.isArray(values)) {
-        console.warn(`⚠ البيانات الممررة إلى ${selectId} ليست مصفوفة.`);
-        return;
-    }
-
-    values.forEach(value => {
-        if (typeof value === "string") { // ✅ تأكد أن القيمة نصية قبل الإضافة
-            let option = document.createElement("option");
-            option.value = value.trim();
-            option.textContent = value.trim();
-            selectElement.appendChild(option);
-        } else {
-            console.warn(`⚠ تم العثور على قيمة غير نصية في ${selectId}:`, value);
-        }
-    });
-
-    console.log(`✅ تم تعبئة ${selectId} بعدد ${values.length} خيارات.`);
+  // ✅ تفعيل البحث داخل القائمة إذا كانت المكتبة موجودة
+  if (typeof MultiselectDropdown !== "undefined" && MultiselectDropdown.init) {
+    MultiselectDropdown.init();
+  }
 }
 
 // ✅ حذف الموظف
@@ -962,6 +1019,58 @@ function closeEditModal() {
   } else {
     console.error("❌ خطأ: لم يتم العثور على نافذة التعديل.");
   }
+}
+
+async function loadHistory() {
+  const { data, error } = await supabase
+    .from("history")
+    .select("*"); // نحتاج كل الأعمدة لحساب المدة
+
+  if (error) {
+    console.error("❌ فشل تحميل سجل الخدمة:", error);
+    return new Map();
+  }
+
+  const historyMap = new Map();
+
+  // نرتب البيانات حسب employee_id
+  const groupedByEmployee = {};
+
+  data.forEach(record => {
+    const empId = String(record.employee_id);
+    if (!groupedByEmployee[empId]) {
+      groupedByEmployee[empId] = [];
+    }
+    groupedByEmployee[empId].push(record);
+  });
+
+  for (const [empId, records] of Object.entries(groupedByEmployee)) {
+    // ترتيب السجلات حسب التاريخ مثل ما تسوي بالسجل
+    records.sort((a, b) => {
+      const dateA = new Date(a.join_date || a.leave_date || "1900-01-01");
+      const dateB = new Date(b.join_date || b.leave_date || "1900-01-01");
+      return dateA - dateB;
+    });
+
+    const historyList = [];
+
+    for (let i = 0; i < records.length; i++) {
+      const entry = records[i];
+      const nextEntry = records[i + 1] || null;
+      const prevEntry = records[i - 1] || null;
+
+      const duration = getServiceDuration(entry, nextEntry, prevEntry);
+
+      historyList.push({
+        ship: entry.ship,
+        duration: duration
+      });
+    }
+
+    historyMap.set(empId, historyList);
+  }
+
+  return historyMap;
 }
 
 function populateFilterDropdown(containerId, values) {
@@ -1301,18 +1410,37 @@ function printFilteredData() {
                         <th>تاريخ النزول</th>
                         <th>مدة النزول</th>
                         <th>الحالة</th>
+                        ${document.body.classList.contains("print-history") ? `<th>الخدمة السابقة</th>` : ""}
                         <th>الملاحظات</th>
                     </tr>
                 </thead>
-                <tbody>
-                ${filteredRows.map(row => {
-                  let cells = row.querySelectorAll("td");
-                  let limitedCells = Array.from(cells).slice(0, 10); // ✅ أول 10 خلايا فقط
-                  let rowHtml = limitedCells.map(cell => `<td>${cell.innerHTML}</td>`).join('');
-                  return `<tr>${rowHtml}</tr>`;
-                }).join('')}                
-                </tbody>
-            </table>
+<tbody>
+  ${filteredRows.map(row => {
+    let cells = row.querySelectorAll("td");
+
+    // نشيك إذا عمود الخدمة السابقة ظاهر
+    const showHistory = document.body.classList.contains("print-history");
+
+    let rowHtml = Array.from(cells).map((cell, index) => {
+      // 🔕 إخفاء الخدمة السابقة إذا الجيك بوكس مو مفعل
+      if (!showHistory && index === 9) return '';
+    
+      // 🔕 إخفاء عمود الإجراءات دائماً أثناء الطباعة
+      if (index === 11) return '';
+    
+      // ✏️ الملاحظات
+      if (index === 10) {
+        const printNote = cell.querySelector(".print-note-only");
+        return `<td>${printNote ? printNote.innerHTML : ""}</td>`;
+      }
+    
+      return `<td>${cell.innerText}</td>`;
+    }).filter(Boolean).join('');    
+
+    return `<tr>${rowHtml}</tr>`;
+  }).join('')}
+</tbody>
+</table>
         </body>
         </html>
     `);
@@ -1553,13 +1681,32 @@ function updatePrintFiltersSummary() {
   document.getElementById("filter-details-print").innerHTML = summary;
 }
 
-// ✅ عند تشغيل الصفحة
 document.addEventListener("DOMContentLoaded", () => {
   loadEmployees();
-  ensureFiltersContainer();   // تأكد أن الحاوية موجودة
+  ensureFiltersContainer();
   loadFilterOptions("rank", "ranks-container");
   loadFilterOptions("ship", "ships-container");
   loadFilterOptions("status", "status-container");
+
+  // ✅ إظهار/إخفاء عمود الخدمة السابقة
+  const checkbox = document.getElementById("toggle-history-col");
+  const table = document.querySelector(".table-container table");
+
+  if (table) {
+    table.classList.add("hide-history");
+  }
+
+  if (checkbox) {
+    checkbox.addEventListener("change", () => {
+      if (checkbox.checked) {
+        table.classList.remove("hide-history");
+        document.body.classList.add("print-history");
+      } else {
+        table.classList.add("hide-history");
+        document.body.classList.remove("print-history");
+      }
+    });
+  }
 });
 
 // ✅ جعل الدوال متاحة عالميًا

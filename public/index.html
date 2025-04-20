@@ -6,6 +6,9 @@
     <title>ادارة طواقم شركة ناقلات النفط العراقية</title>
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo&display=swap" rel="stylesheet">
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
     <style>
@@ -327,6 +330,13 @@
     <span class="pulse-icon">📲</span> تثبيت التطبيق
   </button>   
     
+  <div style="margin-bottom: 10px;">
+    <label>
+      <input type="checkbox" id="toggle-history-col">
+      إظهار الخدمة السابقة
+    </label>
+  </div>
+  
     <table class="summary-table">
         <thead>
             <tr>
@@ -407,9 +417,9 @@
     <div class="search-container">
         <input type="text" id="search-input" placeholder="🔍 ابحث عن اسم..." onkeyup="searchByName()">
     </div>
-
+    
     <div class="table-container">
-      <table>
+      <table id="employee-table">
         <thead>
           <tr>
             <th>#</th>
@@ -421,6 +431,13 @@
             <th>تاريخ النزول</th>
             <th>مدة النزول <button onclick="sortByDuration('leave_duration')">⬆⬇</button></th>
             <th>الحالة</th>
+            <th class="history-col">
+              الخدمة السابقة
+              <br>
+              <label style="font-size: 12px; font-weight: normal;">
+                <input type="checkbox" id="toggle-rest-filter"> إظهار الاستراحة
+              </label>
+            </th>            
             <th>الملاحظات</th>
             <th class="actions-cell">إجراءات</th>
           </tr>

@@ -528,3 +528,197 @@ th button:hover {
   text-align: center;
   cursor: pointer;
 }
+
+@import url('https://fonts.googleapis.com/css2?family=Cairo&display=swap');
+
+/* ✅ جدول العرض على الشاشة */
+.table-container table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 14px;
+  background-color: white;
+}
+
+.table-container th,
+.table-container td {
+  border: 1px solid #ddd;
+  padding: 6px 8px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.table-container th {
+  background-color: #f5f5f5;
+  font-weight: bold;
+}
+
+/* ✅ تنسيق الملاحظات */
+.note-field {
+  border: none;
+  resize: none;
+  background: transparent;
+  width: 100%;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: 1.4;
+  padding: 4px;
+  overflow: hidden;
+  min-height: 32px;
+  transition: height 0.2s ease;
+}
+
+.print-note-only {
+  display: none;
+}
+
+@media screen {
+  .print-note-only {
+    display: none !important;
+  }
+}
+
+/* ✅ شارات الخدمة السابقة */
+.history-col {
+  width: 180px;
+}
+
+.history-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.history-badge {
+  display: inline-block;
+  background-color: #ddd;
+  color: #333;
+  border-radius: 12px;
+  padding: 2px 8px;
+  font-size: 12px;
+  margin: 2px;
+  white-space: nowrap;
+}
+
+.history-badge.gray {
+  background-color: #f0f0f0;
+  color: #888;
+  font-style: italic;
+}
+
+/* ✅ تنسيق الطباعة */
+@media print {
+  * {
+    font-family: 'Cairo', 'Arial', sans-serif !important;
+    font-size: 12px;
+    color: #000;
+  }
+
+  body {
+    background: white;
+  }
+
+  .note-field,
+  .no-print {
+    display: none !important;
+  }
+
+  .print-note-only {
+    display: block !important;
+    white-space: pre-wrap;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+  }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+
+  th, td {
+    border: 1px solid #aaa;
+    padding: 6px;
+    text-align: center;
+    vertical-align: middle;
+  }
+
+  th {
+    background-color: #f0f0f0 !important;
+    font-weight: bold;
+  }
+
+  .summary-table th {
+    background-color: #ccc !important;
+  }
+
+  .history-wrap {
+    display: block !important;
+  }
+
+  .history-badge {
+    display: inline-block !important;
+    visibility: visible !important;
+  }
+
+  .history-col {
+    display: table-cell !important;
+    visibility: visible !important;
+  }
+
+  #employee-table {
+    display: table !important;
+    visibility: visible !important;
+  }
+
+  #employee-table th,
+  #employee-table td {
+    display: table-cell !important;
+    visibility: visible !important;
+  }
+}
+
+.history-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+}
+
+@media print {
+  .history-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-start;
+  }
+}
+
+/* ✅ إخفاء عمود الخدمة السابقة (رقم 10) */
+.hide-history th:nth-child(10),
+.hide-history td:nth-child(10) {
+  display: none !important;
+}
+
+@media print {
+  /* 👇 يظهر فقط إذا body يحتوي على كلاس print-history */
+  body:not(.print-history) .history-col {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  body:not(.print-history) th:nth-child(10),
+  body:not(.print-history) td:nth-child(10) {
+    display: none !important;
+    visibility: hidden !important;
+  }
+}
+
+@media print {
+  body:not(.print-history) .history-col,
+  body:not(.print-history) th:nth-child(10),
+  body:not(.print-history) td:nth-child(10),
+  body:not(.print-history) .history-wrap {
+    display: none !important;
+    visibility: hidden !important;
+  }
+}
