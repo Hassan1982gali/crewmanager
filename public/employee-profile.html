@@ -104,6 +104,13 @@
     </button>
   </div>  
 
+  <div class="no-print" style="text-align: center; margin-bottom: 15px;">
+    <label style="font-weight: bold;">
+      <input type="checkbox" id="toggle-evaluation-print" checked>
+      📋 تضمين التقييم في الطباعة
+    </label>
+  </div>  
+
   <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 20px;">
     <div>
       <img id="profile-image" src="" alt="صورة الموظف" style="width: 120px; height: 120px; object-fit: cover; border-radius: 12px; border: 2px solid #ccc;">
@@ -174,6 +181,7 @@
 
   <div class="section" id="service-section">
     <h3>📅  سجل الخدمة البحرية</h3>  
+    <p style="font-weight: bold; color: #0d47a1;">📊 Average Evaluation: <span id="average-evaluation">—</span></p>
     <div class="no-print" style="margin-bottom: 10px; text-align: left;">
       <label for="filterType">📂 تصفية حسب النوع:</label>
       <select id="filterType" onchange="filterServiceTable()">
@@ -199,9 +207,16 @@
     <table>
       <thead>
         <tr>
-          <th>الناقلة</th><th>الحالة</th><th>من تاريخ</th><th>إلى تاريخ</th><th>المدة</th><th>الرتبة</th><th class="no-print">إجراءات</th>
+          <th>الناقلة</th>
+          <th>الحالة</th>
+          <th>من تاريخ</th>
+          <th>إلى تاريخ</th>
+          <th>المدة</th>
+          <th>الرتبة</th>
+          <th>التقييم</th> <!-- العمود الجديد -->
+          <th class="no-print">إجراءات</th>
         </tr>
-      </thead>
+      </thead>      
       <tbody id="seaTimeProfileBody"></tbody>
     </table>
   </div>
@@ -265,10 +280,23 @@ async function updateEmployeeInfo() {
   async function editServiceEntry(button, id) {
   const row = button.closest("tr");
   const cells = row.querySelectorAll("td");
-  const [shipCell, statusCell, joinCell, leaveCell, durationCell, rankCell] = cells;
+  const [shipCell, statusCell, joinCell, leaveCell, durationCell, rankCell, evalCell] = cells;
 
   if (button.textContent.includes("✏️")) {
     shipCell.contentEditable = statusCell.contentEditable = joinCell.contentEditable = leaveCell.contentEditable = durationCell.contentEditable = rankCell.contentEditable = true;
+
+// تحويل التقييم إلى dropdown
+const currentEval = evalCell.textContent.trim().split(" ")[0];
+evalCell.innerHTML = `
+  <select id="eval-select">
+    <option value="">—</option>
+    <option value="1" ${currentEval === "1" ? "selected" : ""}>1 - Excellent</option>
+    <option value="2" ${currentEval === "2" ? "selected" : ""}>2 - Very Good</option>
+    <option value="3" ${currentEval === "3" ? "selected" : ""}>3 - Good</option>
+    <option value="4" ${currentEval === "4" ? "selected" : ""}>4 - Average</option>
+    <option value="5" ${currentEval === "5" ? "selected" : ""}>5 - Poor</option>
+  </select>
+`;
     shipCell.focus();
     button.textContent = "💾";
     button.classList.remove("edit");
@@ -283,14 +311,17 @@ async function updateEmployeeInfo() {
     const joinDate = joinValue === "" ? null : joinValue;
     const leaveDate = leaveValue === "" ? null : leaveValue;
 
-    const { error } = await supabase.from("history").update({
-      ship: shipCell.textContent.trim(),
-      status: statusCell.textContent.trim(),
-      join_date: joinDate,
-      leave_date: leaveDate,
-      duration: calculateDuration(joinDate, leaveDate),
-      rank: rankCell.textContent.trim()
-    }).eq("id", id);
+    const evalValue = document.getElementById("eval-select").value;
+
+const { error } = await supabase.from("history").update({
+  ship: shipCell.textContent.trim(),
+  status: statusCell.textContent.trim(),
+  join_date: joinDate,
+  leave_date: leaveDate,
+  duration: calculateDuration(joinDate, leaveDate),
+  rank: rankCell.textContent.trim(),
+  evaluation: evalValue ? parseInt(evalValue) : null
+}).eq("id", id);
 
     if (error) {
       alert("فشل التعديل: " + error.message);
@@ -731,23 +762,41 @@ function renderServiceTable(data, fullList = fullHistory) {
     console.log(`🔢 [${entry.ship}] المدة المحسوبة = ${duration} يوم`);
 
     return `
-      <tr>
-        <td>${entry.ship}</td>
-        <td>${entry.status}</td>
-        <td>${entry.join_date || ""}</td>
-        <td>${entry.leave_date || ""}</td>
-        <td>${duration} يوم</td>
-        <td>${entry.rank || "—"}</td>
-        <td class="actions no-print">
-          <button class="edit" onclick="editServiceEntry(this, '${entry.id}')">✏️</button>
-          <button class="delete" onclick="deleteServiceEntry('${entry.id}')">🗑️</button>
-        </td>
-      </tr>
-    `;
+  <tr>
+    <td>${entry.ship}</td>
+    <td>${entry.status}</td>
+    <td>${entry.join_date || ""}</td>
+    <td>${entry.leave_date || ""}</td>
+    <td>${duration} يوم</td>
+    <td>${entry.rank || "—"}</td>
+    <td>${entry.evaluation ? `${entry.evaluation} - ${evaluationText(entry.evaluation)}` : "—"}</td>
+    <td class="actions no-print">
+      <button class="edit" onclick="editServiceEntry(this, '${entry.id}')">✏️</button>
+      <button class="delete" onclick="deleteServiceEntry('${entry.id}')">🗑️</button>
+    </td>
+  </tr>
+`;
   }).join("");
 
+  // 🧮 حساب متوسط التقييم
+const ratings = data.map(e => e.evaluation).filter(v => v !== null && v !== undefined).map(Number);
+const avg = ratings.length ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(2) : null;
+
+document.getElementById("average-evaluation").textContent =
+  avg ? `${avg} - ${evaluationText(Math.round(avg))}` : "—";
   document.getElementById("sea-total-days").textContent = totalDays;
   document.getElementById("sea-moves").textContent = data.length;
+}
+
+function evaluationText(score) {
+  switch (parseInt(score)) {
+    case 1: return "Excellent";
+    case 2: return "Very Good";
+    case 3: return "Good";
+    case 4: return "Average";
+    case 5: return "Poor";
+    default: return "—";
+  }
 }
 
 function getServiceDuration(entry, nextEntry, prevEntry) {
@@ -829,6 +878,19 @@ function printSection(sectionId) {
     const seaSummary = document.querySelectorAll(".section")[2];
     const summaryClone = seaSummary.cloneNode(true);
     clonedSection.prepend(summaryClone);
+  }
+
+  // ✅ هنا نتحكم بإظهار التقييم
+  const includeEval = document.getElementById("toggle-evaluation-print")?.checked;
+
+  if (!includeEval) {
+    const evalColumns = clonedSection.querySelectorAll("td:nth-child(7), th:nth-child(7)");
+    evalColumns.forEach(el => el.remove());
+
+    const avgEval = clonedSection.querySelector("#average-evaluation");
+    if (avgEval) {
+      avgEval.closest("p")?.remove();
+    }
   }
 
   const printableContent = `
