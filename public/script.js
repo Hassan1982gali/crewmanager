@@ -893,30 +893,34 @@ async function editCrewMember(crewId) {
 }
 
 async function loadDropdown(selectId, column, selectedValue) {
+  let selectElement = document.getElementById(selectId);
+  if (!selectElement) return;
+
+  // ✅ إزالة القيم السابقة
+  selectElement.innerHTML = `<option value="">اختر ${column}</option>`;
+
+  // ✨ استخدام قائمة الرتب الأصلية إذا كان المطلوب هو "rank"
+  let values = [];
+  if (column === "rank") {
+    values = [...rankOrder]; // 🎯 الحل هنا
+  } else {
     const { data, error } = await supabase.from("crew_list").select(column);
-
     if (error) {
-        console.error(`❌ خطأ أثناء تحميل ${column}:`, error);
-        return;
+      console.error(`❌ خطأ أثناء تحميل ${column}:`, error);
+      return;
     }
+    values = [...new Set(data.map(crew => crew[column]).filter(Boolean))];
+  }
 
-    let selectElement = document.getElementById(selectId);
-    if (!selectElement) return;
+  values.forEach(value => {
+    let option = document.createElement("option");
+    option.value = value;
+    option.textContent = value;
+    if (value === selectedValue) option.selected = true;
+    selectElement.appendChild(option);
+  });
 
-    // ✅ إزالة القيم السابقة وإضافة الخيار الافتراضي
-    selectElement.innerHTML = `<option value="">اختر ${column}</option>`;
-
-    // ✅ إضافة القيم الفريدة إلى القائمة
-    let uniqueValues = [...new Set(data.map(crew => crew[column]).filter(Boolean))];
-    uniqueValues.forEach(value => {
-        let option = document.createElement("option");
-        option.value = value;
-        option.textContent = value;
-        if (value === selectedValue) option.selected = true;
-        selectElement.appendChild(option);
-    });
-
-    console.log(`✅ تم تحميل ${column} بنجاح:`, uniqueValues);
+  console.log(`✅ تم تحميل ${column} بنجاح:`, values);
 }
 
 // ✅ تحميل بيانات القوائم المنسدلة في نافذة "إضافة موظف"
