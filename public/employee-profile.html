@@ -79,6 +79,31 @@
     display: none !important;
   }
 }
+
+@media print {
+  #toggle-complete-btn {
+    display: none !important;
+  }
+}
+
+.complete-toggle-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 25px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  color: white;
+  transition: background 0.3s ease;
+}
+
+.complete-toggle-btn.complete {
+  background-color: #28a745; /* أخضر */
+}
+
+.complete-toggle-btn.incomplete {
+  background-color: #dc3545; /* أحمر */
+}
   </style>
 </head>
 <body>
@@ -155,7 +180,11 @@
   </div>  
 
   <div class="section" id="certificates-section">
-    <h3>🎓 الشهادات البحرية</h3>  
+    <h3>🎓 الشهادات البحرية</h3> 
+    <!-- ✅ زر اكتمال الملف -->
+<button id="toggle-complete-btn" class="complete-toggle-btn">جارٍ التحميل...</button>
+  <span id="completion-status-msg" style="margin-right: 10px;"></span>
+</div> 
 
     <div class="form-inline no-print">
       <input type="text" id="cert-name" placeholder="اسم الشهادة">
@@ -643,6 +672,28 @@ document.addEventListener("DOMContentLoaded", () => {
   loadServiceDropdowns();
 });
 
+const rankOrder = [
+  "ربان",
+  "رئيس ضباط",
+  "رئيس مهندسين",
+  "ضابط ثاني",
+  "ضابط ثالث",
+  "ضابط رابع",
+  "مهندس ثاني",
+  "مهندس ثالث",
+  "مهندس رابع",
+  "مهندس كهرباء",
+  "رقيب سطحة",
+  "مراقب مضخة",
+  "بحار",
+  "كهربائي",
+  "ميكانيك",
+  "مراقب غرفة ماكنة",
+  "طباخ",
+  "مأمور مائدة",
+];
+
+
 async function loadServiceDropdowns() {
   const { data: crew } = await supabase.from("crew_list").select("ship, status, rank");
   if (!crew) return;
@@ -659,7 +710,6 @@ async function loadServiceDropdowns() {
   // إزالة التكرار
   const ships = [...new Set(crew.map(c => c.ship).filter(Boolean))];
   const statuses = [...new Set(crew.map(c => c.status).filter(Boolean))];
-  const ranks = [...new Set(crew.map(c => c.rank).filter(Boolean))];
 
   ships.sort().forEach(ship => {
     const opt = document.createElement("option");
@@ -673,11 +723,11 @@ async function loadServiceDropdowns() {
     statusSelect.appendChild(opt);
   });
 
-  ranks.sort().forEach(rank => {
-    const opt = document.createElement("option");
-    opt.value = opt.textContent = rank;
-    rankSelect.appendChild(opt);
-  });
+  rankOrder.forEach(rank => {
+  const opt = document.createElement("option");
+  opt.value = opt.textContent = rank;
+  rankSelect.appendChild(opt);
+});
 }
 
 async function uploadEmployeeImage() {
@@ -952,5 +1002,116 @@ async function deleteCertificateDocument(certId, documentUrl) {
   loadCertificates(); // لإعادة تحميل الجدول وتحديث العرض
 }
   </script>
+
+  <script>
+  document.addEventListener("DOMContentLoaded", async () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const employeeId = urlParams.get("id");
+
+    if (!employeeId) return;
+
+    const { data, error } = await supabase
+      .from("crew_list")
+      .select("is_complete")
+      .eq("id", employeeId)
+      .single();
+
+    const btn = document.getElementById("mark-incomplete-btn");
+    const msg = document.getElementById("completion-status-msg");
+
+    if (error || !data) {
+      console.error("❌ فشل في جلب حالة الاكتمال:", error);
+      btn.style.display = "none";
+      return;
+    }
+
+    if (data.is_complete === false) {
+      msg.textContent = "⚠ هذا الملف مُعلَّم كـ غير مكتمل";
+    }
+
+    const { data: userData } = await supabase.auth.getUser();
+    const email = userData?.user?.email || "";
+
+    btn.addEventListener("click", async () => {
+      const { error: updateError } = await supabase
+        .from("crew_list")
+        .update({ is_complete: false })
+        .eq("id", employeeId);
+
+      if (updateError) {
+        alert("❌ فشل في تحديث حالة الملف");
+        console.error(updateError);
+      } else {
+        alert("✅ تم تعليم الملف كـ غير مكتمل");
+        msg.textContent = "⚠ هذا الملف مُعلَّم كـ غير مكتمل";
+        btn.disabled = true;
+      }
+    });
+  });
+</script>
+
+<script>
+async function setupCompletionToggle(employeeId) {
+  const button = document.getElementById("toggle-complete-btn");
+  if (!button) return;
+
+  // ✅ جلب حالة الاكتمال من Supabase
+  const { data, error } = await supabase
+    .from("crew_list")
+    .select("is_complete")
+    .eq("id", employeeId)
+    .single();
+
+  if (error || !data) {
+    console.error("❌ خطأ في جلب حالة الاكتمال:", error);
+    button.textContent = "خطأ!";
+    button.disabled = true;
+    return;
+  }
+
+  // ✅ تحديث الزر حسب الحالة
+  updateToggleButtonUI(button, data.is_complete);
+
+  // ✅ عند الضغط: نقلب الحالة ونحدث
+  button.addEventListener("click", async () => {
+    const newState = !button.classList.contains("complete");
+
+    const { error: updateError } = await supabase
+      .from("crew_list")
+      .update({ is_complete: newState })
+      .eq("id", employeeId);
+
+    if (updateError) {
+      alert("❌ فشل التحديث");
+      return;
+    }
+
+    updateToggleButtonUI(button, newState);
+  });
+}
+
+// ✅ دالة تحديث مظهر الزر
+function updateToggleButtonUI(button, isComplete) {
+  if (isComplete) {
+    button.textContent = "✅ مكتمل";
+    button.classList.add("complete");
+    button.classList.remove("incomplete");
+  } else {
+    button.textContent = "❌ غير مكتمل";
+    button.classList.add("incomplete");
+    button.classList.remove("complete");
+  }
+}
+
+// ✅ نفذ عند تحميل الصفحة (تأكد employeeId جاهز)
+document.addEventListener("DOMContentLoaded", () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const employeeId = urlParams.get("id");
+  if (employeeId) {
+    setupCompletionToggle(employeeId);
+  }
+});
+</script>
+
 </body>
 </html>

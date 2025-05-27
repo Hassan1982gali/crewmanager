@@ -202,8 +202,8 @@ async function loadEmployees(callback = null) {
 
   // جلب بيانات الطاقم
   const { data: employees, error } = await supabase
-    .from("crew_list")
-    .select("id, name, rank, ship, join_date, join_duration, leave_date, leave_duration, status, note");
+  .from("crew_list")
+  .select("id, name, rank, ship, join_date, join_duration, leave_date, leave_duration, status, note, is_complete");
 
   if (error) {
     console.error("❌ خطأ أثناء جلب بيانات الطاقم:", error);
@@ -374,7 +374,11 @@ async function showSeaTime(employeeId) {
         <td>${entry.join_date || "-"}</td>
         <td>${entry.leave_date || "-"}</td>
         <td>${duration} يوم</td>
-        <td>${crewData?.rank || "-"}</td> <!-- ✅ الرتبة من crew_list فقط -->
+        <td>${
+  entry.rank && entry.rank.trim() !== ""
+    ? entry.rank
+    : (!entry.leave_date ? crewData?.rank : "-")
+}</td>
         <td><button onclick="deleteHistoryRecord('${entry.id}')" style="color: red;">🗑</button></td>
       `;
       tableBody.appendChild(row);
@@ -440,6 +444,12 @@ function displayEmployees(employees, historyMap = new Map()) {
   }
   tableBody.innerHTML = "";
 
+  const showIncompleteOnly = document.getElementById("filter-incomplete-only")?.checked;
+
+  if (showIncompleteOnly) {
+    employees = employees.filter(emp => emp.is_complete === false);
+  }
+
   // فرز البيانات حسب الترتيب المفضل للرتب
   employees.sort((a, b) => rankOrder.indexOf(a.rank) - rankOrder.indexOf(b.rank));
 
@@ -481,7 +491,9 @@ historyRecords.forEach(record => {
     let row = document.createElement("tr");
     row.innerHTML = `
       <td>${index + 1}</td>
-      <td>${crew.name ?? "غير معروف"}</td>
+        <td style="${crew.is_complete === false ? 'background-color:#ffe6e6; color:#cc0000; font-weight:bold;' : ''}">
+    ${crew.name ?? "غير معروف"}
+  </td>
       <td>${crew.rank ?? "غير معروف"}</td>
       <td>${crew.ship ?? "غير معروف"}</td>
       <td>${crew.join_date ?? "غير متوفر"}</td>
@@ -942,6 +954,8 @@ async function loadAddModalData() {
 
         // استخراج القيم الفريدة والتحقق من أنها نصوص فقط
         let ranks = [...new Set(data.map(crew => crew.rank).filter(value => typeof value === "string" && value.trim() !== ""))];
+        if (!ranks.includes("ضابط ثاني")) ranks.push("ضابط ثاني");
+if (!ranks.includes("ضابط ثالث")) ranks.push("ضابط ثالث");
         let ships = [...new Set(data.map(crew => crew.ship).filter(value => typeof value === "string" && value.trim() !== ""))];
         let statuses = [...new Set(data.map(crew => crew.status).filter(value => typeof value === "string" && value.trim() !== ""))];
 
@@ -1162,6 +1176,10 @@ function clearFilters(containerId) {
 // ✅ تحميل الموظفين والفلاتر عند تشغيل الصفحة
 document.addEventListener("DOMContentLoaded", () => {
   loadEmployees(); // تحميل بيانات الموظفين
+  // ✅ تشغيل الفلتر عند تغيير حالة الـ checkbox
+document.getElementById("filter-incomplete-only")?.addEventListener("change", () => {
+  loadEmployees(); // يعيد تحميل الجدول
+});
   ensureFiltersContainer(); // يتأكد من وجود .filters-container
 
   // ✅ تحميل الفلاتر باستخدام الدالة الموحدة
@@ -1245,20 +1263,19 @@ window.saveNewCrewMember = saveNewCrewMember;
 // ✅ تحميل الفلاتر عند تشغيل الصفحة
 async function loadFilterOptions(column, containerId) {
   console.log(`🚀 تحميل ${column} للفلاتر...`);
-  const { data, error } = await supabase.from("crew_list").select(column);
+  
+  let uniqueValues = [];
 
-  if (error) {
-    console.error(`❌ خطأ أثناء جلب ${column}:`, error);
-    return;
+  if (column === "rank") {
+    uniqueValues = [...rankOrder]; // ✅ استخدم القائمة المرتبة يدويًا
+  } else {
+    const { data, error } = await supabase.from("crew_list").select(column);
+    if (error) {
+      console.error(`❌ خطأ أثناء جلب ${column}:`, error);
+      return;
+    }
+    uniqueValues = [...new Set(data.map(row => row[column]).filter(Boolean))];
   }
-
-  const container = document.getElementById(containerId);
-  if (!container) {
-    console.error(`❌ لم يتم العثور على العنصر: #${containerId}`);
-    return;
-  }
-
-  const uniqueValues = [...new Set(data.map(item => item[column]).filter(Boolean))];
 
   populateFilterDropdown(containerId, uniqueValues);
 }
