@@ -311,14 +311,14 @@ async function showSeaTime(employeeId) {
   }
 
   // ✅ جلب اسم الموظف
-  const { data: empData, error: empError } = await supabase
+  const { data: empData, error: empError } = await sb
     .from("crew_list")
     .select("name")
     .eq("id", employeeId)
     .single();
 
   // ✅ جلب الرتبة الأصلية من crew_list
-  const { data: crewData } = await supabase
+  const { data: crewData } = await sb
     .from("crew_list")
     .select("id, rank")
     .eq("id", employeeId)
@@ -335,7 +335,7 @@ async function showSeaTime(employeeId) {
   tableBody.innerHTML = "";
 
   // ✅ جلب سجل الخدمة
-  const { data, error } = await supabase
+  const { data, error } = await sb
     .from("history")
     .select("*")
     .eq("employee_id", employeeId);
@@ -389,7 +389,7 @@ async function showSeaTime(employeeId) {
 async function deleteHistoryRecord(historyId) {
   if (!confirm("⚠ هل تريد بالتأكيد حذف هذا السجل؟")) return;
 
-  const { error } = await supabase
+  const { error } = await sb
     .from("history")
     .delete()
     .eq("id", historyId);
@@ -545,7 +545,7 @@ historyRecords.forEach(record => {
         const newNote = event.target.value;
         const crewId = event.target.dataset.id;
       
-        const { error } = await supabase
+        const { error } = await sb
           .from("crew_list")
           .update({ note: newNote })
           .eq("id", crewId);
@@ -750,7 +750,7 @@ async function saveEditCrewMember() {
         note: note || null,
     };
 
-const { data: oldData, error: oldError } = await supabase
+const { data: oldData, error: oldError } = await sb
   .from("crew_list")
   .select("ship, status, join_date, leave_date")
   .eq("id", memberId)
@@ -823,7 +823,7 @@ loadEmployees(() => {
 }
 
 async function recalculateHistoryDurations(employeeId) {
-  const { data: history, error } = await supabase
+  const { data: history, error } = await sb
     .from("history")
     .select("*")
     .eq("employee_id", employeeId)
@@ -861,7 +861,7 @@ async function recalculateHistoryDurations(employeeId) {
 
   // 📝 إرسال التحديثات كلها
   for (let update of updates) {
-    await supabase
+    await sb
       .from("history")
       .update({ duration: update.duration })
       .eq("id", update.id);
@@ -873,7 +873,7 @@ async function recalculateHistoryDurations(employeeId) {
 async function editCrewMember(crewId) {
     console.log("🔹 تعديل الموظف:", crewId);
 
-    const { data, error } = await supabase
+    const { data, error } = await sb
         .from("crew_list")
         .select("*")
         .eq("id", crewId)

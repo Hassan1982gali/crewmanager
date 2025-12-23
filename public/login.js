@@ -1,6 +1,6 @@
 const { createClient } = supabase;
 
-const supabaseClient = createClient(
+const sb = createClient(
   'https://hhglsrugbayccdboasaj.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhoZ2xzcnVnYmF5Y2NkYm9hc2FqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI5NTEzMDIsImV4cCI6MjA1ODUyNzMwMn0._wHDCT00aa4IQYJNzpL4hjcz9BURslqJt9OUtfxjxlM'
 );
@@ -25,7 +25,7 @@ async function login() {
     return;
   }
 
-  const { data, error } = await supabaseClient.auth.signInWithPassword({
+  const { data, error } = await sb.auth.signInWithPassword({
     email,
     password
   });

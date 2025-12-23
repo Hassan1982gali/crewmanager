@@ -288,7 +288,7 @@ async function updateEmployeeInfo() {
   const phone2 = document.getElementById("profile-phone2").value.trim();
   const address = document.getElementById("profile-address").value.trim();
 
-  const { error } = await supabase
+  const { error } = await sb
     .from("crew_list")
     .update({ phone1, phone2, address })
     .eq("id", employeeId);
@@ -302,7 +302,7 @@ async function updateEmployeeInfo() {
 
   async function deleteServiceEntry(id) {
     if (!confirm("هل أنت متأكد من حذف هذه الخدمة؟")) return;
-    await supabase.from("history").delete().eq("id", id);
+    await sb.from("history").delete().eq("id", id);
     loadEmployeeProfile();
   }
 
@@ -342,7 +342,7 @@ evalCell.innerHTML = `
 
     const evalValue = document.getElementById("eval-select").value;
 
-const { error } = await supabase.from("history").update({
+const { error } = await sb.from("history").update({
   ship: shipCell.textContent.trim(),
   status: statusCell.textContent.trim(),
   join_date: joinDate,
@@ -419,7 +419,7 @@ const { error } = await supabase.from("history").update({
         return;
       }
 
-      const { error } = await supabase.from("certificates").insert({
+      const { error } = await sb.from("certificates").insert({
         employee_id: employeeId,
         name,
         issue_date: issue,
@@ -441,7 +441,7 @@ const { error } = await supabase.from("history").update({
   if (!confirmDelete) return;
 
   // 👇 أول شي نجيب الامتداد حتى نحذف الملف
-  const { data, error: fetchError } = await supabase
+  const { data, error: fetchError } = await sb
     .from("certificates")
     .select("document_url")
     .eq("id", id)
@@ -456,7 +456,7 @@ const { error } = await supabase.from("history").update({
   if (data.document_url) {
     const filePath = data.document_url.split("/").pop(); // اسم الملف فقط
 
-    const { error: deleteFileError } = await supabase
+    const { error: deleteFileError } = await sb
       .storage
       .from("certificates-docs")
       .remove([filePath]);
@@ -468,7 +468,7 @@ const { error } = await supabase.from("history").update({
   }
 
   // ✅ بعدها نحذف من قاعدة البيانات
-  const { error: deleteRowError } = await supabase
+  const { error: deleteRowError } = await sb
     .from("certificates")
     .delete()
     .eq("id", id);
@@ -507,7 +507,7 @@ function calculateDuration(startDate, endDate) {
         button.textContent = "✏️";
         button.classList.add("edit");
 
-        const { error } = await supabase.from("certificates").update({
+        const { error } = await sb.from("certificates").update({
           name: nameCell.textContent.trim(),
           issue_date: issueCell.textContent.trim(),
           expiry_date: expiryCell.textContent.trim()
@@ -566,7 +566,7 @@ async function addServiceEntry() {
     duration = calculateDuration(join_date, new Date().toISOString().split("T")[0]);
   }
 
-  const { error } = await supabase.from("history").insert({
+  const { error } = await sb.from("history").insert({
     employee_id: employeeId,
     ship,
     status,
@@ -610,7 +610,7 @@ async function uploadEmployeeImage() {
   const fileName = `${employeeId}.${fileExt}`;
   const filePath = `employees/${fileName}`;
 
-  const { error: uploadError } = await supabase.storage
+  const { error: uploadError } = await sb.storage
     .from("employees")
     .upload(filePath, file, { upsert: true });
 
@@ -625,7 +625,7 @@ async function uploadEmployeeImage() {
 
   const imageUrl = data.publicUrl;
 
-  const { error: updateError } = await supabase
+  const { error: updateError } = await sb
     .from("crew_list")
     .update({ image_url: imageUrl })
     .eq("id", employeeId);
@@ -643,7 +643,7 @@ async function deleteEmployeeImage() {
   const filePath = `${employeeId}.${fileExt}`;
 
   // حذف من Supabase Storage
-  const { error: deleteError } = await supabase.storage
+  const { error: deleteError } = await sb.storage
     .from("employees")
     .remove([filePath]);
 
@@ -653,7 +653,7 @@ async function deleteEmployeeImage() {
   }
 
   // حذف الرابط من قاعدة البيانات
-  const { error: updateError } = await supabase
+  const { error: updateError } = await sb
     .from("crew_list")
     .update({ image_url: null })
     .eq("id", employeeId);
@@ -748,7 +748,7 @@ async function uploadEmployeeImage() {
   const fileName = `${employeeId}.${fileExt}`; // اسم فقط بدون مجلد
   const filePath = fileName;
 
-  const { error: uploadError } = await supabase.storage
+  const { error: uploadError } = await sb.storage
     .from("employees")
     .upload(filePath, file, { upsert: true });
 
@@ -763,7 +763,7 @@ async function uploadEmployeeImage() {
 
   const imageUrl = data?.publicUrl;
 
-  const { error: updateError } = await supabase
+  const { error: updateError } = await sb
     .from("crew_list")
     .update({ image_url: imageUrl })
     .eq("id", employeeId);
@@ -961,7 +961,7 @@ function printSection(sectionId) {
 }
 
 async function clearCertificateUrl(certId) {
-  const { error } = await supabase
+  const { error } = await sb
     .from("certificates")
     .update({ document_url: null })
     .eq("id", certId);
@@ -977,7 +977,7 @@ async function deleteCertificateDocument(certId, documentUrl) {
   const fileName = documentUrl.split('/').pop(); // استخراج اسم الملف فقط
 
   // 1️⃣ حذف الملف من التخزين
-  const { error: deleteStorageError } = await supabase
+  const { error: deleteStorageError } = await sb
     .storage
     .from('certificates-docs')
     .remove([fileName]);
@@ -988,7 +988,7 @@ async function deleteCertificateDocument(certId, documentUrl) {
   }
 
   // 2️⃣ تحديث الشهادة وحذف الرابط
-  const { error: updateDbError } = await supabase
+  const { error: updateDbError } = await sb
     .from("certificates")
     .update({ document_url: null })
     .eq("id", certId);
@@ -1079,7 +1079,7 @@ async function setupCompletionToggle(employeeId) {
   button.addEventListener("click", async () => {
     const newState = !button.classList.contains("complete");
 
-    const { error: updateError } = await supabase
+    const { error: updateError } = await sb
       .from("crew_list")
       .update({ is_complete: newState })
       .eq("id", employeeId);
