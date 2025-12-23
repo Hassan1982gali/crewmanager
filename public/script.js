@@ -2,29 +2,27 @@
 const SUPABASE_URL = "https://hhglsrugbayccdboasaj.supabase.co";
 const SUPABASE_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhoZ2xzcnVnYmF5Y2NkYm9hc2FqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI5NTEzMDIsImV4cCI6MjA1ODUyNzMwMn0._wHDCT00aa4IQYJNzpL4hjcz9BURslqJt9OUtfxjxlM";
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ✅ التحقق من حالة تسجيل الدخول عند تحميل الصفحة
 async function checkAuth() {
-    const { data, error } = await supabase.auth.getSession();
-    
-    if (!data.session) {
-        // ❌ إذا لم يكن هناك جلسة، إعادة توجيه المستخدم إلى صفحة تسجيل الدخول
-        window.location.href = "login.html";
-    }
+  const { data, error } = await sb.auth.getSession();
+
+  if (!data.session) {
+    window.location.href = "login.html";
+  }
 }
 
-// ✅ استدعاء التحقق عند تحميل الصفحة
 document.addEventListener("DOMContentLoaded", checkAuth);
 
 // ✅ دالة تسجيل الخروج
 async function logout() {
-    const { error } = await supabase.auth.signOut();
-    if (!error) {
-        window.location.href = "login.html"; // ✅ إعادة التوجيه إلى صفحة تسجيل الدخول
-    } else {
-        console.error("❌ خطأ أثناء تسجيل الخروج:", error.message);
-    }
+  const { error } = await sb.auth.signOut();
+  if (!error) {
+    window.location.href = "login.html";
+  } else {
+    console.error("❌ خطأ أثناء تسجيل الخروج:", error.message);
+  }
 }
 
 // ✅ تحديد الحسابات والصلاحيات
@@ -32,7 +30,7 @@ const ADMIN_EMAILS = ["viewer@marine.com"]; // حساب الـ Admin
 const VIEWER_EMAILS = ["hr@marine.com"]; // حساب المشاهدة فقط
 
 async function checkUserRole() {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user } } = await sb.auth.getUser();
     
     if (!user) {
         window.location.href = "login.html"; // ✅ إعادة التوجيه لصفحة تسجيل الدخول
@@ -42,7 +40,7 @@ async function checkUserRole() {
     console.log("🔹 المستخدم الحالي:", user.email);
 
     // ✅ جلب دور المستخدم من قاعدة البيانات
-    const { data, error } = await supabase
+    const { data, error } = await sb
         .from("user_roles")
         .select("role")
         .eq("email", user.email)
@@ -99,7 +97,7 @@ function disableEditing() {
 
 // ✅ تسجيل الخروج
 function logout() {
-    supabase.auth.signOut().then(() => {
+sb.auth.signOut().then(() => {
         window.location.href = "login.html"; // إعادة التوجيه لصفحة تسجيل الدخول بعد تسجيل الخروج
     });
 }
@@ -201,7 +199,7 @@ async function loadEmployees(callback = null) {
   console.log("🚀 تحميل بيانات الطاقم...");
 
   // جلب بيانات الطاقم
-  const { data: employees, error } = await supabase
+  const { data: employees, error } = await sb
   .from("crew_list")
   .select("id, name, rank, ship, join_date, join_duration, leave_date, leave_duration, status, note, is_complete");
 
@@ -233,7 +231,7 @@ async function addCertificate() {
       return;
     }
   
-    const { error } = await supabase.from("certificates").insert([{
+    const { error } = await sb.from("certificates").insert([{
       employee_id: employeeId,
       name,
       issue_date: issue,
@@ -258,7 +256,7 @@ async function showAddHistoryModal() {
     document.getElementById("addHistoryModal").style.display = "block";
 
     // جلب أسماء الموظفين
-    const { data, error } = await supabase.from("crew_list").select("id, name");
+    const { data, error } = await sb.from("crew_list").select("id, name");
     const select = document.getElementById("history-employee");
     select.innerHTML = "";
 
@@ -284,7 +282,7 @@ async function saveHistoryRecord() {
 
     const duration = parseInt(calculateDuration(join_date, leave_date)) || 0;
 
-    const { error } = await supabase.from("history").insert([{
+    const { error } = await sb.from("history").insert([{
         employee_id,
         ship,
         status,
@@ -667,7 +665,7 @@ function ensureFiltersContainer() {
 
 async function loadFilterOptions(column, containerId) {
   console.log(`🚀 تحميل ${column} للفلاتر...`);
-  const { data, error } = await supabase.from("crew_list").select(column);
+  const { data, error } = await sb.from("crew_list").select(column);
   if (error) {
     console.error(`❌ خطأ أثناء جلب ${column}:`, error);
     return;
@@ -806,7 +804,7 @@ if (joinDate && leaveDate) {
   historyRecord.duration = 0;
 }
   
-      await supabase.from("history").insert([historyRecord]);
+      await sb.from("history").insert([historyRecord]);
   
       console.log("✅ تمت إضافة سجل جديد إلى جدول history");
   }  
@@ -916,7 +914,7 @@ async function loadDropdown(selectId, column, selectedValue) {
   if (column === "rank") {
     values = [...rankOrder]; // 🎯 الحل هنا
   } else {
-    const { data, error } = await supabase.from("crew_list").select(column);
+    const { data, error } = await sb.from("crew_list").select(column);
     if (error) {
       console.error(`❌ خطأ أثناء تحميل ${column}:`, error);
       return;
@@ -940,7 +938,7 @@ async function loadAddModalData() {
     console.log("🚀 تحميل بيانات نافذة إضافة موظف...");
 
     try {
-        const { data, error } = await supabase.from("crew_list").select("rank, ship, status");
+        const { data, error } = await sb.from("crew_list").select("rank, ship, status");
 
         if (error) {
             console.error("❌ خطأ أثناء تحميل بيانات الإضافة:", error);
@@ -1018,7 +1016,7 @@ function populateDropdown(selectId, values) {
 async function deleteCrewMember(memberId) {
   if (!confirm("⚠ هل أنت متأكد أنك تريد حذف هذا العضو؟")) return;
 
-  const { error } = await supabase.from("crew_list").delete().eq("id", memberId);
+  const { error } = await sb.from("crew_list").delete().eq("id", memberId);
   if (error) {
     alert("⚠ لم يتمكن من حذف العضو.");
     console.error("❌ خطأ أثناء حذف الموظف:", error);
@@ -1040,7 +1038,7 @@ function closeEditModal() {
 }
 
 async function loadHistory() {
-  const { data, error } = await supabase
+  const { data, error } = await sb
     .from("history")
     .select("*"); // نحتاج كل الأعمدة لحساب المدة
 
@@ -1246,7 +1244,7 @@ async function saveNewCrewMember() {
 
     console.log("📌 إضافة موظف جديد:", newEmployee);
 
-    const { error } = await supabase.from("crew_list").insert([newEmployee]);
+    const { error } = await sb.from("crew_list").insert([newEmployee]);
     if (error) {
         console.error("❌ خطأ أثناء إضافة الموظف:", error);
         alert("⚠ حدث خطأ أثناء إضافة الموظف.");
@@ -1269,7 +1267,7 @@ async function loadFilterOptions(column, containerId) {
   if (column === "rank") {
     uniqueValues = [...rankOrder]; // ✅ استخدم القائمة المرتبة يدويًا
   } else {
-    const { data, error } = await supabase.from("crew_list").select(column);
+    const { data, error } = await sb.from("crew_list").select(column);
     if (error) {
       console.error(`❌ خطأ أثناء جلب ${column}:`, error);
       return;

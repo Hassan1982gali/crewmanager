@@ -254,7 +254,7 @@
     let fullHistory = []; // ضروري تكون متعرفة خارج الدوال
     const SUPABASE_URL = "https://hhglsrugbayccdboasaj.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhoZ2xzcnVnYmF5Y2NkYm9hc2FqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI5NTEzMDIsImV4cCI6MjA1ODUyNzMwMn0._wHDCT00aa4IQYJNzpL4hjcz9BURslqJt9OUtfxjxlM";
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const urlParams = new URLSearchParams(window.location.search);
     const employeeId = urlParams.get("id");
@@ -262,7 +262,7 @@
     async function loadEmployeeProfile() {
   if (!employeeId) return;
 
-  const { data: crew } = await supabase.from("crew_list").select("*").eq("id", employeeId).single();
+  const { data: crew } = await sb.from("crew_list").select("*").eq("id", employeeId).single();
   if (crew) {
     document.getElementById("profile-name").textContent = crew.name;
     document.getElementById("profile-rank").textContent = crew.rank;
@@ -276,7 +276,7 @@
     document.getElementById("profile-image").src = crew.image_url;
   }
 
-  const { data: history } = await supabase.from("history").select("*").eq("employee_id", employeeId);
+  const { data: history } = await sb.from("history").select("*").eq("employee_id", employeeId);
 fullHistory = history || [];
 renderServiceTable(fullHistory);
 
@@ -361,7 +361,7 @@ const { error } = await supabase.from("history").update({
 }
 
     async function loadCertificates() {
-  const { data: certs } = await supabase.from("certificates").select("*").eq("employee_id", employeeId);
+  const { data: certs } = await sb.from("certificates").select("*").eq("employee_id", employeeId);
   const today = new Date();
 
   console.log(certs);
@@ -695,7 +695,7 @@ const rankOrder = [
 
 
 async function loadServiceDropdowns() {
-  const { data: crew } = await supabase.from("crew_list").select("ship, status, rank");
+  const { data: crew } = await sb.from("crew_list").select("ship, status, rank");
   if (!crew) return;
 
   // نحذف الخيارات القديمة أول شي
@@ -1010,7 +1010,7 @@ async function deleteCertificateDocument(certId, documentUrl) {
 
     if (!employeeId) return;
 
-    const { data, error } = await supabase
+    const { data, error } = await sb
       .from("crew_list")
       .select("is_complete")
       .eq("id", employeeId)
@@ -1021,7 +1021,7 @@ async function deleteCertificateDocument(certId, documentUrl) {
 
     if (error || !data) {
       console.error("❌ فشل في جلب حالة الاكتمال:", error);
-      btn.style.display = "none";
+      if (btn) btn.style.display = "none";
       return;
     }
 
@@ -1029,25 +1029,28 @@ async function deleteCertificateDocument(certId, documentUrl) {
       msg.textContent = "⚠ هذا الملف مُعلَّم كـ غير مكتمل";
     }
 
-    const { data: userData } = await supabase.auth.getUser();
+    const { data: userData } = await sb.auth.getUser();
     const email = userData?.user?.email || "";
 
-    btn.addEventListener("click", async () => {
-      const { error: updateError } = await supabase
-        .from("crew_list")
-        .update({ is_complete: false })
-        .eq("id", employeeId);
+    // ✅ تأكد الزر موجود قبل addEventListener
+    if (btn) {
+      btn.addEventListener("click", async () => {
+        const { error: updateError } = await sb
+          .from("crew_list")
+          .update({ is_complete: false })
+          .eq("id", employeeId);
 
-      if (updateError) {
-        alert("❌ فشل في تحديث حالة الملف");
-        console.error(updateError);
-      } else {
-        alert("✅ تم تعليم الملف كـ غير مكتمل");
-        msg.textContent = "⚠ هذا الملف مُعلَّم كـ غير مكتمل";
-        btn.disabled = true;
-      }
-    });
-  });
+        if (updateError) {
+          alert("❌ فشل في تحديث حالة الملف");
+          console.error(updateError);
+        } else {
+          alert("✅ تم تعليم الملف كـ غير مكتمل");
+          msg.textContent = "⚠ هذا الملف مُعلَّم كـ غير مكتمل";
+          btn.disabled = true;
+        }
+      });
+    }
+  }); // ✅ هذا كان ناقص
 </script>
 
 <script>
@@ -1056,7 +1059,7 @@ async function setupCompletionToggle(employeeId) {
   if (!button) return;
 
   // ✅ جلب حالة الاكتمال من Supabase
-  const { data, error } = await supabase
+  const { data, error } = await sb
     .from("crew_list")
     .select("is_complete")
     .eq("id", employeeId)
