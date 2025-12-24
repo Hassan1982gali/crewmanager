@@ -768,7 +768,7 @@ if (oldError || !oldData) {
     let selectedShips = getSelectedFilters("filter-ship");
     let selectedStatuses = getSelectedFilters("filter-status");
 
-    supabase
+    sb
         .from("crew_list")
         .update(updatedData)
         .eq("id", memberId)
