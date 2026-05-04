@@ -198,10 +198,10 @@ function smartServiceDuration(joinDate, leaveDate, status) {
 async function loadEmployees(callback = null) {
   console.log("🚀 تحميل بيانات الطاقم...");
 
-  // جلب بيانات الطاقم
+  // جلب بيانات الطاقم (تم إضافة job_number هنا)
   const { data: employees, error } = await sb
   .from("crew_list")
-  .select("id, name, rank, ship, join_date, join_duration, leave_date, leave_duration, status, note, is_complete");
+  .select("id, name, job_number, rank, ship, join_date, join_duration, leave_date, leave_duration, status, note, is_complete");
 
   if (error) {
     console.error("❌ خطأ أثناء جلب بيانات الطاقم:", error);
@@ -492,6 +492,10 @@ historyRecords.forEach(record => {
         <td style="${crew.is_complete === false ? 'background-color:#ffe6e6; color:#d32f2f; font-weight:bold;' : ''}">
   ${crew.is_complete === false ? '<span title="ملف غير مكتمل (نقص شهادات)">⚠️</span> ' : ''}${crew.name ?? "غير معروف"}
 </td>
+<td>
+        <input type="text" class="job-number-field no-print" data-id="${crew.id}" value="${crew.job_number ?? ""}" placeholder="—" style="width: 70px; text-align: center; border: 1px dashed transparent; background: transparent; font-family: 'Cairo', sans-serif;">
+        <div class="print-job-number-only" style="display: none;">${crew.job_number ?? "—"}</div>
+      </td>
       <td>${crew.rank ?? "غير معروف"}</td>
       <td>${crew.ship ?? "غير معروف"}</td>
       <td>${crew.join_date ?? "غير متوفر"}</td>
@@ -542,30 +546,56 @@ historyRecords.forEach(record => {
       });
 
       noteField.addEventListener("blur", async (event) => {
-        const newNote = event.target.value;
-        const crewId = event.target.dataset.id;
-      
-        const { error } = await sb
-          .from("crew_list")
-          .update({ note: newNote })
-          .eq("id", crewId);
-      
-        if (error) {
-          console.error("❌ فشل في تحديث الملاحظة:", error);
-          alert("حدث خطأ أثناء حفظ الملاحظة!");
-        } else {
-          console.log("✅ تم حفظ الملاحظة!");
-      
-          // ✅ تحديث نسخة الطباعة مباشرة
-          const printNoteDiv = noteField.parentElement.querySelector(".print-note-only");
-          if (printNoteDiv) {
-            printNoteDiv.innerHTML = newNote.replace(/\n/g, "<br>");
-          }
-        }
-      });      
-    });
-  }, 0);
-}
+            const newNote = event.target.value;
+            const crewId = event.target.dataset.id;
+          
+            const { error } = await sb
+              .from("crew_list")
+              .update({ note: newNote })
+              .eq("id", crewId);
+          
+            if (error) {
+              console.error("❌ فشل في تحديث الملاحظة:", error);
+              alert("حدث خطأ أثناء حفظ الملاحظة!");
+            } else {
+              console.log("✅ تم حفظ الملاحظة!");
+          
+              // ✅ تحديث نسخة الطباعة مباشرة
+              const printNoteDiv = noteField.parentElement.querySelector(".print-note-only");
+              if (printNoteDiv) {
+                printNoteDiv.innerHTML = newNote.replace(/\n/g, "<br>");
+              }
+            }
+          });      
+        });
+
+        // 👇👇 الكود الجديد الخاص بالحفظ التلقائي للرقم الوظيفي 👇👇
+        document.querySelectorAll(".job-number-field").forEach((jobField) => {
+          jobField.addEventListener("focus", () => {
+            jobField.style.border = "1px dashed #1a237e"; // إظهار إطار عند الكتابة
+          });
+          jobField.addEventListener("blur", async (event) => {
+            jobField.style.border = "1px dashed transparent"; // إخفاء الإطار بعد الانتهاء
+            const newJobNum = event.target.value;
+            const crewId = event.target.dataset.id;
+            
+            const { error } = await sb.from("crew_list").update({ job_number: newJobNum }).eq("id", crewId);
+            
+            if (!error) {
+              console.log("✅ تم حفظ الرقم الوظيفي!");
+              // تحديث نسخة الطباعة
+              const printDiv = jobField.parentElement.querySelector(".print-job-number-only");
+              if (printDiv) printDiv.innerText = newJobNum || "—";
+            } else {
+              console.error("❌ فشل في تحديث الرقم الوظيفي:", error);
+            }
+          });
+        });
+        // 👆👆 نهاية كود الرقم الوظيفي 👆👆
+
+      }, 0);
+    }
+
 // ✅ ربط checkbox لإخفاء الاستراحة
 document.getElementById("toggle-rest-filter").addEventListener("change", () => {
   loadEmployees(); // إعادة تحميل الجدول مع الفلتر الجديد
@@ -691,9 +721,10 @@ function filterCrew() {
 
     let rows = document.querySelectorAll("#employee-table-body tr");
     rows.forEach((row) => {
-        let rankColumn = row.cells[2].textContent.trim();
-        let shipColumn = row.cells[3].textContent.trim();
-        let statusColumn = row.cells[8].textContent.trim();
+        // 🔴 التعديل صار هنا: غيرنا الأرقام إلى 3 و 4 و 9
+        let rankColumn = row.cells[3].textContent.trim();
+        let shipColumn = row.cells[4].textContent.trim();
+        let statusColumn = row.cells[9].textContent.trim();
 
         let matchesRank = selectedRanks.length === 0 || selectedRanks.includes(rankColumn);
         let matchesShip = selectedShips.length === 0 || selectedShips.includes(shipColumn);
@@ -1465,6 +1496,7 @@ function printFilteredData() {
                     <tr>
                         <th>#</th>
                         <th>الاسم</th>
+                        <th>الرقم الوظيفي</th> <!-- ضفنا العنوان هنا -->
                         <th>الرتبة</th>
                         <th>الناقلة</th>
                         <th>تاريخ الالتحاق</th>
@@ -1481,10 +1513,14 @@ function printFilteredData() {
                     let cells = row.querySelectorAll("td");
                     const showHistory = document.body.classList.contains("print-history");
                     let rowHtml = Array.from(cells).map((cell, index) => {
-                      if (!showHistory && index === 9) return ''; // إخفاء الخدمة السابقة إذا لم تكن مفعلة
-                      if (index === 11) return ''; // إخفاء عمود الإجراءات
+                      if (!showHistory && index === 10) return ''; // الخدمة السابقة (صار رقمها 10)
+                      if (index === 12) return ''; // الإجراءات (صار رقمها 12)
 
-                      if (index === 10) { // معالجة الملاحظات للطباعة
+                      if (index === 2) { // الرقم الوظيفي للطباعة
+                        const printJobNum = cell.querySelector(".print-job-number-only");
+                        return `<td>${printJobNum ? printJobNum.innerText : ""}</td>`;
+                      }
+                      if (index === 11) { // الملاحظات للطباعة
                         const printNote = cell.querySelector(".print-note-only");
                         return `<td>${printNote ? printNote.innerHTML : ""}</td>`;
                       }
