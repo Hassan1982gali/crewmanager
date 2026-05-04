@@ -1,724 +1,514 @@
-/* ✅ تحسين التصميم العام */
+/* =========================================
+   1. الإعدادات العامة والخطوط
+========================================= */
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+
 body {
     font-family: 'Cairo', sans-serif;
-    background-color: #f4f4f4;
+    background-color: #f0f4f8; /* لون خلفية مريح للعين */
     color: #333;
     text-align: center;
     padding: 20px;
     direction: rtl;
+    margin: 0;
 }
 
-/* ✅ تحسين العنوان */
-h1 {
-    color: #007bff;
-    font-size: 32px;
-    font-weight: bold;
-    margin-bottom: 20px;
-}
-
-/* ✅ تحسين الفلاتر */
-.filters-container {
-    display: flex;
-    justify-content: center;
-    gap: 15px;
-    margin-bottom: 15px;
-}
-
-/* ✅ تصميم القائمة المنسدلة */
-.dropdown {
-    position: relative;
-    display: inline-block;
-    width: 200px;
-}
-
-.dropdown-button {
-    background-color: #3498db;
-    color: white;
-    padding: 10px;
-    font-size: 16px;
-    border: none;
-    cursor: pointer;
-    width: 100%;
+/* =========================================
+   تنسيق الهيدر (البانر الرئيسي) وأزراره
+========================================= */
+.dashboard-header {
+    background: linear-gradient(135deg, #1a237e, #0d47a1); /* تدرج لوني أزرق فخم */
+    padding: 25px 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    margin-bottom: 25px;
     text-align: center;
-    border-radius: 5px;
-    transition: background 0.3s;
+    border-bottom: 4px solid #ffb300; /* خط سفلي ذهبي للمسة بحرية */
+    position: relative; /* مهم جداً لتثبيت الأزرار بداخله */
 }
 
-.dropdown-button:hover {
-    background-color: #2980b9;
-}
-
-.dropdown-content {
-    display: none; /* تأكد من أنها مخفية افتراضيًا */
+/* حاوية الأزرار داخل الهيدر */
+.header-actions {
     position: absolute;
-    background-color: white;
-    min-width: 200px;
-    max-height: 250px;
-    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
-    z-index: 1000;
-    overflow-y: auto;
-    border-radius: 5px;
-    padding: 10px;
-    border: 1px solid #ddd;
-}
-
-/* عندما تكون القائمة نشطة */
-.dropdown-content.active {
-    display: block;
-}
-
-.dropdown.active .dropdown-content {
-    display: block;
-}
-
-/* ✅ تحسين البحث داخل الفلتر */
-.filter-search {
-    width: 100%;
-    padding: 5px;
-    margin-bottom: 5px;
-    border: 1px solid #ddd;
-    border-radius: 3px;
-}
-
-/* ✅ تحسين خيارات الـ checkboxes */
-.checkbox-list {
+    top: 15px;
+    left: 15px; /* دفع الأزرار للزاوية اليسرى العلوية */
     display: flex;
-    flex-direction: column; /* ✅ جعل العناصر تظهر عموديًا */
-    max-height: 150px;
-    overflow-y: auto;
-    gap: 5px; /* ✅ إضافة مسافة صغيرة بين العناصر */
-    padding: 5px;
-}
-
-.checkbox-list div {
-    display: flex;
-    align-items: center;
-    padding: 5px;
-    cursor: pointer;
-}
-
-.checkbox-list input {
-    margin-left: 8px;
-}
-
-.checkbox-list label {
-    cursor: pointer;
-    flex-grow: 1;
-}
-
-/* ✅ تحسين أزرار القائمة */
-.dropdown-buttons {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 5px;
-}
-
-.dropdown-buttons button {
-    padding: 5px 10px;
-    cursor: pointer;
-    border: none;
-    border-radius: 3px;
-}
-
-.dropdown-buttons button:first-child {
-    background-color: #2ecc71;
-    color: white;
-}
-
-.dropdown-buttons button:last-child {
-    background-color: #e74c3c;
-    color: white;
-}
-
-/* ✅ تحسين زر التصفية */
-.filter-button {
-    background: #28a745;
-    color: white;
-    padding: 8px 15px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: 0.3s;
-}
-
-.filter-button:hover {
-    background: #218838;
-}
-
-/* ✅ تحسين تصميم الجدول */
-table {
-    width: 100%;
-    border-collapse: collapse;
-    background: white;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    border-radius: 10px;
-    overflow: hidden;
-}
-
-th, td {
-    padding: 12px;
-    border-bottom: 1px solid #ddd;
-    text-align: center;
-}
-
-th {
-    background-color: #007bff;
-    color: white;
-}
-
-tr:hover {
-    background-color: #f1f1f1;
-}
-
-/* ✅ تصغير حجم نافذة التعديل */
-.modal {
-    display: none;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: white;
-    padding: 15px; /* تقليل الهوامش الداخلية */
-    border-radius: 10px;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
-    width: 35%; /* تصغير العرض */
-    max-width: 400px; /* الحد الأقصى للعرض */
-    max-height: 80vh; /* الحد الأقصى للارتفاع */
-    overflow-y: auto; /* جعل النافذة قابلة للتمرير عند الحاجة */
-}
-
-/* ✅ تنسيق أفضل للعناصر داخل النافذة */
-.modal-content {
-    display: flex;
-    flex-direction: column;
     gap: 10px;
 }
 
-.modal-content table {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: center;
-}
-
-.modal-content th, .modal-content td {
-  padding: 8px;
-  border: 1px solid #ccc;
-}
-.modal-content th {
-  background-color: #f2f2f2;
-}
-#seaTimeModal .modal-content th {
-  background-color: #e3f2fd;  /* لون سماوي فاتح */
-  color: #0d47a1;              /* خط أزرق غامق */
-  padding: 10px;
-  font-weight: bold;
-  border-bottom: 1px solid #ccc;
-  text-align: center;
-}
-
-<div style="text-align: center; margin-top: 20px;">
-  <button onclick="printSeaTime()" style="padding: 8px 16px;">🖨️ طباعة السجل</button>
-</div>
-
-</style>
-
-/* ✅ تنسيق زر الحفظ */
-.modal button {
-    background: #007BFF;
+/* شكل الأزرار الشفافة داخل الهيدر */
+.header-btn {
+    background-color: rgba(255, 255, 255, 0.1);
     color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: bold;
+    font-family: 'Cairo', sans-serif;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+/* تأثير التمرير لزر التثبيت */
+.header-btn:hover {
+    background-color: rgba(255, 255, 255, 0.25);
+    border-color: white;
+}
+
+/* تأثير التمرير الخاص بزر تسجيل الخروج (يتحول للأحمر) */
+.btn-logout-new:hover {
+    background-color: #e53935;
+    border-color: #e53935;
+    color: white;
+}
+
+/* حركة النبض لزر التثبيت */
+.pulse-icon {
+    display: inline-block;
+    animation: pulse 1.4s infinite;
+}
+
+@keyframes pulse {
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+.page-title {
+    color: #ffffff;
+    font-size: 32px;
+    font-weight: 800;
+    margin: 0 0 10px 0;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+}
+
+.page-subtitle {
+    color: #bbdefb;
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: 0.5px;
+}
+
+/* =========================================
+   2. الأزرار العامة وأزرار التحكم
+========================================= */
+.utility-btn {
+    padding: 10px 16px;
+    margin: 5px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    font-family: 'Cairo', sans-serif;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.btn-add { background-color: #00796B; }
+.btn-history { background-color: #f57c00; }
+.btn-export { background-color: #0288d1; }
+.btn-print { background-color: #6a1b9a; }
+.btn-logout { background-color: #d32f2f; float: left; margin-top: -10px;}
+
+.utility-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+/* أزرار الإجراءات داخل الجدول */
+.action-btn {
+    padding: 6px 12px;
+    margin: 2px;
+    font-size: 13px;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    cursor: pointer;
+    font-family: 'Cairo', sans-serif;
+    transition: opacity 0.3s;
+}
+
+.btn-edit { background-color: #1e88e5; }
+.btn-delete { background-color: #e53935; }
+.btn-profile { background-color: #43a047; }
+.action-btn:hover { opacity: 0.85; }
+
+/* =========================================
+   3. لوحة التحكم والفلاتر (القوائم المنسدلة)
+========================================= */
+.dropdown {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+}
+
+.dropdown-button {
+    background-color: #1a237e;
+    color: white;
+    padding: 10px;
+    font-size: 14px;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    border-radius: 8px;
+    transition: background 0.3s;
+    font-family: 'Cairo', sans-serif;
+}
+
+.dropdown-button:hover {
+    background-color: #0d47a1;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: white;
+    width: 100%;
+    max-height: 250px;
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    overflow-y: auto;
+    border-radius: 8px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    top: 100%;
+    left: 0;
+    box-sizing: border-box;
+}
+
+.dropdown-content.active { display: block; }
+
+.filter-search {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    box-sizing: border-box;
+    font-family: 'Cairo', sans-serif;
+}
+
+.checkbox-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 150px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.checkbox-list label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    color: #333;
+}
+
+.checkbox-list input[type="checkbox"] {
+    accent-color: #1a237e;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.dropdown-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.dropdown-buttons button {
+    flex: 1;
     padding: 8px;
     border: none;
-    border-radius: 5px;
+    border-radius: 6px;
     cursor: pointer;
-    transition: 0.3s;
+    font-weight: bold;
+    color: white;
+    font-family: 'Cairo', sans-serif;
 }
 
-.modal button:hover {
-    background: #0056b3;
+.dropdown-buttons button:first-child { background-color: #43a047; }
+.dropdown-buttons button:last-child { background-color: #e53935; }
+
+/* =========================================
+   4. تصميم الجدول المتجاوب مع التثبيت (Sticky)
+========================================= */
+.table-container {
+    max-height: 65vh;
+    overflow-y: auto;
+    overflow-x: auto;
+    border-radius: 12px;
+    border: 1px solid #e0e0e0;
+    background: white;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    margin-bottom: 20px;
 }
 
-/* ✅ تحسين زر الإغلاق */
-.close {
-    position: absolute;
-    top: 10px;
-    right: 15px;
-    font-size: 20px;
-    cursor: pointer;
-    color: red;
+.table-container table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    text-align: center;
+    white-space: nowrap;
 }
 
-.close:hover {
-    color: darkred;
+.table-container thead th {
+    position: sticky;
+    top: 0;
+    background-color: #1a237e;
+    color: white;
+    padding: 14px 10px;
+    font-weight: bold;
+    z-index: 10;
+    border-bottom: 2px solid #0d47a1;
 }
 
-/* ✅ تحسين أزرار الفرز */
-th button {
+.table-container td {
+    padding: 4px 10px; /* قللنا الرقم الأول من 12 إلى 6 */
+    border-bottom: 1px solid #eeeeee;
+    vertical-align: middle;
+}
+
+.table-container tbody tr:hover { background-color: #f1f8ff; }
+
+.table-container th button {
     background: none;
     border: none;
     cursor: pointer;
     font-size: 14px;
-    color: #007BFF;
-    padding-left: 5px;
+    color: #bbdefb;
+    margin-right: 5px;
+    transition: color 0.3s;
 }
 
-th button:hover {
-    color: #0056b3;
+.table-container th button:hover { color: white; }
+
+/* =========================================
+   5. النوافذ المنبثقة (Modals)
+========================================= */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(3px);
 }
 
-.search-container {
+.modal-content {
+    background: white;
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    width: 90%;
+    max-width: 500px;
+    max-height: 85vh;
+    overflow-y: auto;
+    position: relative;
+    text-align: right;
+}
+
+.modal-content h2 {
+    color: #1a237e;
     text-align: center;
-    margin-bottom: 15px;
+    margin-top: 0;
+    margin-bottom: 20px;
 }
 
-#search-input {
-    width: 50%;
+.modal-content label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 6px;
+    color: #333;
+}
+
+.modal-content input, 
+.modal-content select, 
+.modal-content textarea {
+    width: 100%;
     padding: 10px;
     border: 1px solid #ccc;
-    border-radius: 5px;
-    font-size: 16px;
-    text-align: center;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    box-sizing: border-box;
+    font-family: 'Cairo', sans-serif;
+    font-size: 14px;
 }
 
-.summary-table {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    width: 250px; /* ✅ تقليل العرض */
-    background: white;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    font-size: 14px; /* ✅ تصغير الخط */
-    text-align: center;
-}
-
-.summary-table th, .summary-table td {
-    padding: 5px;
-    border-bottom: 1px solid #ddd;
-}
-
-.summary-table th {
-    background: #007BFF;
+.modal-content button {
+    background: #1a237e;
     color: white;
-}
-
-/* ✅ إخفاء جدول الملخص بشكل افتراضي */
-.summary-table {
-    display: none;
-}
-
-/* ✅ إخفاء جدول الملخص بشكل افتراضي */
-.summary-table {
-    display: none;
-}
-
-@media print {
-    .summary-table {
-        position: fixed;
-        top: 10px;
-        right: 10px;
-        page-break-before: always; /* ✅ يجعله يظهر مرة واحدة فقط */
-    }
-}
-
-@media print {
-    #employee-table th:nth-child(11),
-    #employee-table td:nth-child(11) {
-      display: none !important;
-    }
-  }
-
-  .table-container {
-    max-height: 500px; /* ✳️ تقدر تغيّره حسب طول الصفحة */
-    overflow-y: auto;
-    border-radius: 10px;
-    border: 1px solid #ddd;
-  }
-  
-  /* ✳️ حتى يبقى رأس الجدول ثابت */
-  .table-container thead th {
-    position: sticky;
-    top: 0;
-    background-color: #007bff;
-    color: white;
-    z-index: 0 !important; /* ✳️ نكسر أي Z-index ثاني */
-  }  
-  
-  .page-title {
-    font-size: 20px;
-    color: #0d47a1;
-    margin: 10px 0 0;
-  }
-  
-  .page-subtitle {
-    font-size: 16px;
-    color: #0d47a1;
-    margin: 5px 0 20px;
-  }  
-
-  .install-btn {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    background-color: #1a237e;
-    color: white;
-    padding: 10px 20px;
+    padding: 12px;
     border: none;
     border-radius: 8px;
-    font-size: 13px;
-    z-index: 999;
-  }  
-
-  .pulse-icon {
-    display: inline-block;
-    animation: pulse 1.4s infinite;
-  }
-  
-  @keyframes pulse {
-    0%   { transform: scale(1); }
-    50%  { transform: scale(1.2); }
-    100% { transform: scale(1); }
-  }  
-
-  /* ✅ تزيين شكل الجيك بوكس */
-.checkbox-list input[type="checkbox"] {
-    appearance: none;
-    -webkit-appearance: none;
-    background-color: #fff;
-    margin: 0 8px 0 0;
-    font: inherit;
-    color: #1a237e;
-    width: 18px;
-    height: 18px;
-    border: 2px solid #1a237e;
-    border-radius: 4px;
-    display: grid;
-    place-content: center;
     cursor: pointer;
-    transition: all 0.2s ease-in-out;
-  }
-  
-  .checkbox-list input[type="checkbox"]::before {
-    content: "";
-    width: 10px;
-    height: 10px;
-    transform: scale(0);
-    transition: transform 0.2s ease-in-out;
-    box-shadow: inset 1em 1em #1a237e;
-    transform-origin: center;
-  }
-  
-  .checkbox-list input[type="checkbox"]:checked::before {
-    transform: scale(1);
-  }
-  
-  /* ✅ تنسيق أفضل لليبل */
-  .checkbox-list label {
-    font-size: 14px;
-    font-weight: 500;
-    color: #333;
-    cursor: pointer;
-    user-select: none;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  
-  .checkbox-option {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 6px;
-    cursor: pointer;
-    font-size: 14px;
-    color: #333;
-  }  
-
-  .checkbox-list label {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 14px;
-    margin-bottom: 5px;
-    cursor: pointer;
-    direction: rtl;
-  }
-  
-  .checkbox-list input[type="checkbox"] {
-    margin: 0;
-    accent-color: #1a237e;
-  }  
-
-  /* 🔧 فرض المحاذاة للcheckboxات داخل الرتب والحالات والناقلات */
-#ranks-container label,
-#status-container label,
-#ships-container label {
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  font-size: 14px !important;
-  margin-bottom: 6px !important;
-  cursor: pointer;
-  direction: rtl;
-}
-
-#ranks-container input[type="checkbox"],
-#status-container input[type="checkbox"],
-#ships-container input[type="checkbox"] {
-  margin: 0 !important;
-  accent-color: #1a237e;
-}
-
-.checkbox-option {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 6px;
-    cursor: pointer;
-    font-size: 14px;
-    direction: rtl;
-  }
-  
-  .checkbox-option input[type="checkbox"] {
-    margin: 0;
-    accent-color: #1a237e;
-  }  
-
-  /* ✅ ترتيب أزرار الفلتر: OK, Cancel, إضافة جديدة */
-.dropdown-buttons,
-.dropdown-add {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-  margin-top: 10px;
-  flex-wrap: wrap;
-}
-
-/* ✅ ضبط أزرار OK وCancel */
-.dropdown-buttons button {
-  padding: 6px 12px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 14px;
-  flex: 1;
-  text-align: center;
-}
-
-.dropdown-buttons button:first-child {
-  background-color: #2ecc71;
-  color: white;
-}
-
-.dropdown-buttons button:last-child {
-  background-color: #e74c3c;
-  color: white;
-}
-
-/* ✅ زر إضافة جديدة */
-.dropdown-add button {
-  flex: 1;
-  background-color: #2196f3;
-  color: white;
-  padding: 6px 12px;
-  border: none;
-  border-radius: 5px;
-  font-size: 14px;
-  text-align: center;
-  cursor: pointer;
-}
-
-@import url('https://fonts.googleapis.com/css2?family=Cairo&display=swap');
-
-/* ✅ جدول العرض على الشاشة */
-.table-container table {
-  border-collapse: collapse;
-  width: 100%;
-  font-size: 14px;
-  background-color: white;
-}
-
-.table-container th,
-.table-container td {
-  border: 1px solid #ddd;
-  padding: 6px 8px;
-  text-align: center;
-  vertical-align: middle;
-}
-
-.table-container th {
-  background-color: #f5f5f5;
-  font-weight: bold;
-}
-
-/* ✅ تنسيق الملاحظات */
-.note-field {
-  border: none;
-  resize: none;
-  background: transparent;
-  width: 100%;
-  font-family: inherit;
-  font-size: inherit;
-  line-height: 1.4;
-  padding: 4px;
-  overflow: hidden;
-  min-height: 32px;
-  transition: height 0.2s ease;
-}
-
-.print-note-only {
-  display: none;
-}
-
-@media screen {
-  .print-note-only {
-    display: none !important;
-  }
-}
-
-/* ✅ شارات الخدمة السابقة */
-.history-col {
-  width: 180px;
-}
-
-.history-wrap {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
-.history-badge {
-  display: inline-block;
-  background-color: #ddd;
-  color: #333;
-  border-radius: 12px;
-  padding: 2px 8px;
-  font-size: 12px;
-  margin: 2px;
-  white-space: nowrap;
-}
-
-.history-badge.gray {
-  background-color: #f0f0f0;
-  color: #888;
-  font-style: italic;
-}
-
-/* ✅ تنسيق الطباعة */
-@media print {
-  * {
-    font-family: 'Cairo', 'Arial', sans-serif !important;
-    font-size: 12px;
-    color: #000;
-  }
-
-  body {
-    background: white;
-  }
-
-  .note-field,
-  .no-print {
-    display: none !important;
-  }
-
-  .print-note-only {
-    display: block !important;
-    white-space: pre-wrap;
-    padding: 0;
-    margin: 0;
     width: 100%;
-  }
-
-  table {
-    border-collapse: collapse;
-    width: 100%;
-  }
-
-  th, td {
-    border: 1px solid #aaa;
-    padding: 6px;
-    text-align: center;
-    vertical-align: middle;
-  }
-
-  th {
-    background-color: #f0f0f0 !important;
+    font-size: 16px;
     font-weight: bold;
-  }
-
-  .summary-table th {
-    background-color: #ccc !important;
-  }
-
-  .history-wrap {
-    display: block !important;
-  }
-
-  .history-badge {
-    display: inline-block !important;
-    visibility: visible !important;
-  }
-
-  .history-col {
-    display: table-cell !important;
-    visibility: visible !important;
-  }
-
-  #employee-table {
-    display: table !important;
-    visibility: visible !important;
-  }
-
-  #employee-table th,
-  #employee-table td {
-    display: table-cell !important;
-    visibility: visible !important;
-  }
+    font-family: 'Cairo', sans-serif;
+    transition: 0.3s;
 }
+
+.modal-content button:hover { background: #0d47a1; }
+
+.close {
+    position: absolute;
+    top: 15px;
+    left: 20px;
+    font-size: 26px;
+    cursor: pointer;
+    color: #e53935;
+    font-weight: bold;
+    transition: transform 0.2s;
+}
+
+.close:hover { transform: scale(1.2); }
+
+/* =========================================
+   6. شارات الخدمة السابقة والملاحظات
+========================================= */
+.history-col { min-width: 160px; }
 
 .history-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  align-items: flex-start;
-}
-
-@media print {
-  .history-wrap {
     display: flex;
     flex-direction: column;
     gap: 4px;
-    align-items: flex-start;
-  }
+    align-items: center;
 }
 
-/* ✅ إخفاء عمود الخدمة السابقة (رقم 10) */
-.hide-history th:nth-child(10),
-.hide-history td:nth-child(10) {
-  display: none !important;
+.history-badge {
+    background-color: #e3f2fd;
+    color: #0d47a1;
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 12px;
+    font-weight: bold;
+    white-space: nowrap;
+    border: 1px solid #bbdefb;
 }
+
+.history-badge.gray {
+    background-color: #f5f5f5;
+    color: #757575;
+    border: 1px solid #e0e0e0;
+    font-weight: normal;
+}
+
+.note-field {
+    border: none;
+    resize: none;
+    background: transparent;
+    width: 100%;
+    font-family: inherit;
+    font-size: 13px;
+    padding: 4px;
+    overflow: hidden;
+    min-height: 32px;
+}
+
+.print-note-only { display: none; }
+
+/* =========================================
+   7. تنسيقات الطباعة المخفية
+========================================= */
+.summary-table, .summary-table-print { display: none; }
 
 @media print {
-  /* 👇 يظهر فقط إذا body يحتوي على كلاس print-history */
-  body:not(.print-history) .history-col {
-    display: none !important;
-    visibility: hidden !important;
-  }
-
-  body:not(.print-history) th:nth-child(10),
-  body:not(.print-history) td:nth-child(10) {
-    display: none !important;
-    visibility: hidden !important;
-  }
+    body { background: white; padding: 0; }
+    
+    /* إخفاء العناصر غير الضرورية للطباعة */
+    .no-print, .action-btn, .utility-btn, .control-panel, .modal, .install-btn, .search-box { 
+        display: none !important; 
+    }
+    
+    .print-note-only { display: block !important; white-space: pre-wrap; }
+    .note-field { display: none !important; }
+    
+    /* فك القيود عن الجدول ليطبع بالكامل */
+    .table-container { 
+        max-height: none !important; 
+        overflow: visible !important; 
+        border: none !important; 
+        box-shadow: none !important; 
+    }
+    
+    .table-container thead th { 
+        position: static !important; 
+        background-color: #e0e0e0 !important; 
+        color: #000 !important; 
+        border: 1px solid #000 !important; 
+    }
+    
+    .table-container td { 
+        border: 1px solid #000 !important; 
+        padding: 6px !important; 
+        white-space: normal !important;
+    }
+    
+    body:not(.print-history) .history-col { display: none !important; }
 }
 
-@media print {
-  body:not(.print-history) .history-col,
-  body:not(.print-history) th:nth-child(10),
-  body:not(.print-history) td:nth-child(10),
-  body:not(.print-history) .history-wrap {
+/* =========================================
+   8. إخفاء عمود الخدمة السابقة
+========================================= */
+.hide-history .history-col {
     display: none !important;
-    visibility: hidden !important;
-  }
+}
+
+/* =========================================
+   10. توافقية الموبايل (Responsive for Mobile)
+========================================= */
+@media screen and (max-width: 768px) {
+    /* 1. تصغير خطوط الهيدر وتعديل المساحة */
+    .page-title { font-size: 20px; margin-top: 25px; }
+    .page-subtitle { font-size: 14px; }
+    .dashboard-header { padding: 15px; }
+    
+    /* 2. ترتيب أزرار الهيدر (تسجيل الخروج) */
+    .header-actions { 
+        position: relative; 
+        top: 0; 
+        left: 0; 
+        justify-content: center; 
+        margin-bottom: 15px; 
+    }
+
+    /* 3. ترتيب شريط البحث والخيارات السريعة */
+    .search-and-toggles { flex-direction: column; align-items: stretch; gap: 10px; }
+    #search-input { max-width: 100% !important; width: 100%; }
+    .search-and-toggles > div { justify-content: space-between; }
+
+    /* 4. ترتيب شريط الأدوات (الأزرار الأربعة) */
+    .action-bar { flex-direction: column; }
+    .action-bar button { width: 100%; margin: 0; }
+
+    /* 5. ترتيب الفلاتر (القوائم المنسدلة) */
+    .filters-container { flex-direction: column; gap: 10px; }
+    .filter-group { width: 100%; }
+
+    /* 6. تصغير النوافذ المنبثقة (Modals) لتناسب الشاشة */
+    .modal-content { 
+        width: 95%; 
+        padding: 20px 15px; 
+        margin: 10px auto;
+    }
+    
+    /* 7. تصغير خطوط الجدول لتقليل التمرير الجانبي */
+    .table-container th, 
+    .table-container td { 
+        font-size: 12px; 
+        padding: 8px 5px; 
+    }
 }

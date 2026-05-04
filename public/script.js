@@ -489,9 +489,9 @@ historyRecords.forEach(record => {
     let row = document.createElement("tr");
     row.innerHTML = `
       <td>${index + 1}</td>
-        <td style="${crew.is_complete === false ? 'background-color:#ffe6e6; color:#cc0000; font-weight:bold;' : ''}">
-    ${crew.name ?? "غير معروف"}
-  </td>
+        <td style="${crew.is_complete === false ? 'background-color:#ffe6e6; color:#d32f2f; font-weight:bold;' : ''}">
+  ${crew.is_complete === false ? '<span title="ملف غير مكتمل (نقص شهادات)">⚠️</span> ' : ''}${crew.name ?? "غير معروف"}
+</td>
       <td>${crew.rank ?? "غير معروف"}</td>
       <td>${crew.ship ?? "غير معروف"}</td>
       <td>${crew.join_date ?? "غير متوفر"}</td>
@@ -1014,16 +1014,16 @@ function populateDropdown(selectId, values) {
 
 // ✅ حذف الموظف
 async function deleteCrewMember(memberId) {
-  if (!confirm("⚠ هل أنت متأكد أنك تريد حذف هذا العضو؟")) return;
+  if (!confirm("⚠ هل أنت متأكد أنك تريد حذف هذا الموظف؟")) return;
 
   const { error } = await sb.from("crew_list").delete().eq("id", memberId);
   if (error) {
-    alert("⚠ لم يتمكن من حذف العضو.");
+    alert("⚠ لم يتمكن من حذف الموظف.");
     console.error("❌ خطأ أثناء حذف الموظف:", error);
     return;
   }
 
-  alert("✅ تم حذف العضو بنجاح.");
+  alert("✅ تم حذف الموظف بنجاح.");
   loadEmployees();
 }
 
@@ -1386,37 +1386,80 @@ function printFilteredData() {
         return;
     }
 
-    let printWindow = window.open('', '', 'width=900,height=600');
+    // جلب التاريخ الحالي للطباعة
+    let printDate = new Date().toLocaleDateString('ar-IQ');
+
+    let printWindow = window.open('', '', 'width=1000,height=800');
     printWindow.document.write(`
-        <html>
+        <html dir="rtl">
         <head>
-            <title>🖨️ طباعة بيانات الطاقم</title>
+            <title>🖨️ تقرير طواقم شركة ناقلات النفط</title>
+            <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
             <style>
-                body { font-family: 'Cairo', sans-serif; text-align: center; direction: rtl; }
-                h2 { margin-bottom: 10px; }
-                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                th, td { padding: 8px; border: 1px solid #000; text-align: center; }
-                th { background: #007BFF; color: white; }
-                .summary-table { width: 50%; margin: 0 auto 20px auto; border: 2px solid #000; }
-                .no-border { border: none; }
+                @page { size: A4 landscape; margin: 15mm; }
+                body { 
+                    font-family: 'Cairo', sans-serif; 
+                    color: #000; 
+                    background: #fff; 
+                    font-size: 12px; 
+                    margin: 0;
+                }
+                .print-header { 
+                    text-align: center; 
+                    margin-bottom: 20px; 
+                    border-bottom: 3px solid #1a237e; 
+                    padding-bottom: 10px; 
+                }
+                .print-header h1 { font-size: 24px; color: #1a237e; margin: 0; }
+                .print-header h2 { font-size: 16px; color: #555; margin: 5px 0 0 0; font-weight: 600; }
+                .meta-info { 
+                    display: flex; 
+                    justify-content: space-between; 
+                    margin-bottom: 20px; 
+                    font-size: 13px; 
+                    background: #f9f9f9; 
+                    padding: 10px 15px; 
+                    border: 1px solid #ddd; 
+                    border-radius: 6px; 
+                }
+                table { 
+                    width: 100%; 
+                    border-collapse: collapse; 
+                    margin-bottom: 20px; 
+                }
+                th, td { 
+                    border: 1px solid #333; 
+                    padding: 8px 4px; 
+                    text-align: center; 
+                    vertical-align: middle; 
+                    word-wrap: break-word; 
+                }
+                th { 
+                    background-color: #e0e0e0; 
+                    font-weight: bold; 
+                    font-size: 13px; 
+                    color: #000;
+                }
+                .summary-table { width: 40%; margin: 0 auto 20px; }
+                tr { page-break-inside: avoid; } /* تمنع انقسام الصف بين صفحتين */
             </style>
         </head>
         <body>
-            <h2>ملخص الطاقم حسب الفلترة</h2>
-            <div style="margin: 10px 0; font-size: 15px;">${generateFilterSummaryHTML()}</div>
+            <div class="print-header">
+                <h1>⚓ شركة ناقلات النفط العراقية</h1>
+                <h2>قسم الملاحين - شعبة التطقيم | تقرير الطواقم المفلتر</h2>
+            </div>
+
+            <div class="meta-info">
+                <div><strong>الفلاتر المطبقة:</strong><br>${generateFilterSummaryHTML() || "الكل (بدون فلاتر)"}</div>
+                <div style="text-align: left;"><strong>تاريخ الطباعة:</strong> <br>${printDate}</div>
+            </div>
+
             <table class="summary-table">
-                <thead>
-                    <tr>
-                        <th>الرتبة</th>
-                        <th>العدد</th>
-                    </tr>
-                </thead>
-                <tbody id="print-summary-body">
-                    ${document.getElementById("summary-body").innerHTML}
-                </tbody>
+                <thead><tr><th>الرتبة</th><th>العدد</th></tr></thead>
+                <tbody id="print-summary-body">${document.getElementById("summary-body").innerHTML}</tbody>
             </table>
 
-            <h2>بيانات الموظفين</h2>
             <table>
                 <thead>
                     <tr>
@@ -1433,39 +1476,33 @@ function printFilteredData() {
                         <th>الملاحظات</th>
                     </tr>
                 </thead>
-<tbody>
-  ${filteredRows.map(row => {
-    let cells = row.querySelectorAll("td");
+                <tbody>
+                  ${filteredRows.map(row => {
+                    let cells = row.querySelectorAll("td");
+                    const showHistory = document.body.classList.contains("print-history");
+                    let rowHtml = Array.from(cells).map((cell, index) => {
+                      if (!showHistory && index === 9) return ''; // إخفاء الخدمة السابقة إذا لم تكن مفعلة
+                      if (index === 11) return ''; // إخفاء عمود الإجراءات
 
-    // نشيك إذا عمود الخدمة السابقة ظاهر
-    const showHistory = document.body.classList.contains("print-history");
-
-    let rowHtml = Array.from(cells).map((cell, index) => {
-      // 🔕 إخفاء الخدمة السابقة إذا الجيك بوكس مو مفعل
-      if (!showHistory && index === 9) return '';
-    
-      // 🔕 إخفاء عمود الإجراءات دائماً أثناء الطباعة
-      if (index === 11) return '';
-    
-      // ✏️ الملاحظات
-      if (index === 10) {
-        const printNote = cell.querySelector(".print-note-only");
-        return `<td>${printNote ? printNote.innerHTML : ""}</td>`;
-      }
-    
-      return `<td>${cell.innerText}</td>`;
-    }).filter(Boolean).join('');    
-
-    return `<tr>${rowHtml}</tr>`;
-  }).join('')}
-</tbody>
-</table>
+                      if (index === 10) { // معالجة الملاحظات للطباعة
+                        const printNote = cell.querySelector(".print-note-only");
+                        return `<td>${printNote ? printNote.innerHTML : ""}</td>`;
+                      }
+                      return `<td>${cell.innerText}</td>`;
+                    }).filter(Boolean).join('');
+                    return `<tr>${rowHtml}</tr>`;
+                  }).join('')}
+                </tbody>
+            </table>
         </body>
         </html>
     `);
 
     printWindow.document.close();
-    printWindow.print();
+    // تأخير بسيط لضمان تحميل الخطوط قبل ظهور نافذة الطباعة
+    setTimeout(() => {
+        printWindow.print();
+    }, 500);
 }
 
 function printSeaTime() {

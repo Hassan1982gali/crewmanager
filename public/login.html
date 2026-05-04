@@ -3,124 +3,189 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>تسجيل الدخول - IOTC</title>
+  <title>تسجيل الدخول - نظام إدارة الطواقم</title>
 
-  <!-- ✅ خط كايرو -->
+  <!-- خط كايرو -->
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
   
-  <!-- ✅ Supabase -->
+  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 
-  <!-- ✅ كود تسجيل الدخول -->
+  <!-- كود تسجيل الدخول -->
   <script defer src="login.js"></script>
 
   <style>
     body {
       font-family: 'Cairo', sans-serif;
-      background: linear-gradient(to bottom, #e3f2fd, #ffffff);
+      /* خلفية متدرجة باللون الأزرق الملكي */
+      background: linear-gradient(135deg, #0d47a1, #1a237e); 
       margin: 0;
       padding: 0;
+      height: 100vh;
       display: flex;
-      flex-direction: column;
+      justify-content: center;
       align-items: center;
+      position: relative;
     }
 
-    header {
-      text-align: center;
-      padding: 30px 10px 10px;
-      color: #0d47a1;
-      line-height: 1.8;
+    /* نقش خفيف على الخلفية يضيف فخامة */
+    .bg-pattern {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+      background-size: 20px 20px;
+      pointer-events: none;
+      z-index: 0;
     }
 
-    header h1 {
-      margin: 5px 0;
-      font-size: 22px;
+    .login-wrapper {
+      width: 100%;
+      max-width: 420px;
+      padding: 20px;
+      box-sizing: border-box;
+      z-index: 1;
     }
 
     .login-container {
-      background-color: white;
-      padding: 30px;
-      margin: 20px;
+      background-color: #ffffff;
+      padding: 40px 30px;
       border-radius: 16px;
-      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
-      width: 100%;
-      max-width: 400px;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
       text-align: center;
+      border-top: 5px solid #ffb300; /* خط ذهبي من الأعلى */
     }
 
     .login-container img {
-      width: 160px;
-      margin-bottom: 20px;
+      width: 120px;
+      margin-bottom: 10px;
     }
 
-    .login-container input {
-      width: 100%;
-      padding: 12px;
-      margin-bottom: 15px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
+    .titles {
+      margin-bottom: 30px;
+    }
+
+    .titles h1 {
+      color: #1a237e;
+      font-size: 22px;
+      margin: 0 0 5px;
+      font-weight: 700;
+    }
+
+    .titles p {
+      color: #78909c;
       font-size: 14px;
+      margin: 0;
+      font-weight: 600;
     }
 
-    .password-wrapper {
+    .input-group {
+      margin-bottom: 20px;
       position: relative;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 14px 15px;
+      border-radius: 8px;
+      border: 1px solid #cfd8dc;
+      font-size: 14px;
+      font-family: 'Cairo', sans-serif;
+      box-sizing: border-box;
+      transition: all 0.3s ease;
+      background: #f8f9fa;
+    }
+
+    .input-group input:focus {
+      outline: none;
+      border-color: #1a237e;
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(26, 35, 126, 0.1);
     }
 
     .password-wrapper span {
       position: absolute;
       top: 50%;
-      left: 10px;
+      left: 15px;
       transform: translateY(-50%);
       cursor: pointer;
       font-size: 18px;
-      color: #666;
+      color: #90a4ae;
       user-select: none;
+      transition: color 0.3s;
     }
 
-    .login-container button {
+    .password-wrapper span:hover {
+      color: #1a237e;
+    }
+
+    .login-btn {
       width: 100%;
-      padding: 12px;
-      background-color: #0d47a1;
+      padding: 14px;
+      background-color: #1a237e;
       color: white;
       border: none;
       border-radius: 8px;
       font-size: 16px;
+      font-weight: bold;
       cursor: pointer;
+      font-family: 'Cairo', sans-serif;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 10px rgba(26, 35, 126, 0.2);
     }
 
-    .login-container button:hover {
-      background-color: #1565c0;
+    .login-btn:hover {
+      background-color: #0d47a1;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(26, 35, 126, 0.3);
+    }
+
+    .login-btn:active {
+      transform: translateY(0);
     }
 
     .error-message {
-      color: red;
-      margin-top: 10px;
+      color: #d32f2f;
+      margin-top: 15px;
       font-size: 14px;
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
 
-  <header>
-    <h1>شركة ناقلات النفط العراقية</h1>
-    <h1>قسم الملاحين - شعبة التطقيم</h1>
-    <h1>نظام ادارة الطواقم البحرية</h1>
-  </header>
+  <div class="bg-pattern"></div>
 
-  <div class="login-container">
-    <img src="logo.jpg" alt="شعار الشركة" />
-
-    <form id="login-form">
-      <input type="email" id="email" placeholder="📧 البريد الإلكتروني" required />
-
-      <div class="password-wrapper">
-        <input type="password" id="password" placeholder="🔒 كلمة المرور" required />
-        <span onclick="togglePasswordVisibility()">👀</span>
+  <div class="login-wrapper">
+    <div class="login-container">
+      
+      <!-- شعار الشركة (تأكد أن logo.jpg موجود في نفس المجلد) -->
+      <img src="logo.jpg" alt="شعار الشركة" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjAiIGhlaWdodD0iMTIwIiB2aWV3Qm94PSIwIDAgMjQgMjQiPjxwYXRoIGZpbGw9IiNjY2MiIGQ9Ik0xMiAxMmMyLjIxIDAgNC0xLjc5IDQtNHMtMS43OS00LTQtNC00IDEuNzktNCA0IDEuNzkgNCA0IDRtMCAyYy0yLjY3IDAtOCAxLjM0LTggNHYyYTEgMSAwIDAgMCAxIDFoMTRhMSAxIDAgMCAwIDEtMXYtMmMwLTIuNjYtNS4zMy00LTgtNHoiLz48L3N2Zz4='"/>
+      
+      <div class="titles">
+        <h1>شركة ناقلات النفط العراقية</h1>
+        <p>نظام إدارة الطواقم البحرية - حسن غالي شلال</p>
       </div>
 
-      <button type="submit">تسجيل الدخول</button>
-      <div id="error" class="error-message"></div>
-    </form>
+      <form id="login-form">
+        <div class="input-group">
+          <!-- أضفنا name="email" و autocomplete="username" -->
+          <input type="email" id="email" name="email" placeholder="📧 البريد الإلكتروني" required autocomplete="username" />
+        </div>
+
+        <div class="input-group password-wrapper">
+          <!-- أضفنا name="password" و autocomplete="current-password" -->
+          <input type="password" id="password" name="password" placeholder="🔒 كلمة المرور" required autocomplete="current-password" />
+          <span onclick="togglePasswordVisibility()" title="إظهار / إخفاء">👁️</span>
+        </div>
+
+        <button type="submit" class="login-btn">تسجيل الدخول</button>
+        <div id="error" class="error-message"></div>
+      </form>
+
+    </div>
   </div>
 
   <script>
