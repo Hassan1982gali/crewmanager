@@ -1,724 +1,1181 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ملف الموظف البحري</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <link rel="stylesheet" href="styles.css"> <!-- نربطها بنفس ملف التنسيق الموحد -->
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
-  <style>
-    /* تنسيقات خاصة بهذه الصفحة فقط (ما تبقى موجود في styles.css) */
-    .profile-header {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
-      align-items: center;
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-      margin-bottom: 20px;
-    }
-    
-    .profile-image-container {
-      flex-shrink: 0;
-      text-align: center;
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ملف الموظف البحري</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <link rel="stylesheet" href="styles.css" />
+    <!-- نربطها بنفس ملف التنسيق الموحد -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* تنسيقات خاصة بهذه الصفحة فقط (ما تبقى موجود في styles.css) */
+      .profile-header {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        align-items: center;
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        margin-bottom: 20px;
+      }
 
-    .profile-info {
-      flex: 1;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 15px;
-    }
+      .profile-image-container {
+        flex-shrink: 0;
+        text-align: center;
+      }
 
-    .info-card {
-      background: #f8f9fa;
-      padding: 10px 15px;
-      border-radius: 8px;
-      border: 1px solid #e0e0e0;
-    }
+      .profile-info {
+        flex: 1;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+      }
 
-    .info-card strong {
-      color: #1a237e;
-      display: block;
-      font-size: 13px;
-      margin-bottom: 5px;
-    }
+      .info-card {
+        background: #f8f9fa;
+        padding: 10px 15px;
+        border-radius: 8px;
+        border: 1px solid #e0e0e0;
+      }
 
-    .info-card span, .info-card input {
-      color: #333;
-      font-weight: 600;
-      font-size: 15px;
-    }
+      .info-card strong {
+        color: #1a237e;
+        display: block;
+        font-size: 13px;
+        margin-bottom: 5px;
+      }
 
-    .info-card input {
-      width: 100%;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      padding: 4px 8px;
-      font-family: inherit;
-      box-sizing: border-box;
-      background: white;
-    }
+      .info-card span,
+      .info-card input {
+        color: #333;
+        font-weight: 600;
+        font-size: 15px;
+      }
 
-    .section-box {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-      margin-bottom: 20px;
-    }
+      .info-card input {
+        width: 100%;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        padding: 4px 8px;
+        font-family: inherit;
+        box-sizing: border-box;
+        background: white;
+      }
 
-    .section-title {
-      color: #1a237e;
-      border-bottom: 2px solid #ffb300;
-      padding-bottom: 10px;
-      margin-top: 0;
-      margin-bottom: 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
+      .section-box {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        margin-bottom: 20px;
+      }
 
-    .form-inline {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 15px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-    
-    .form-inline input, .form-inline select {
-      padding: 8px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-family: inherit;
-      flex: 1;
-      min-width: 150px;
-    }
+      .section-title {
+        color: #1a237e;
+        border-bottom: 2px solid #ffb300;
+        padding-bottom: 10px;
+        margin-top: 0;
+        margin-bottom: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
 
-    .complete-toggle-btn {
-      padding: 8px 16px;
-      border: none;
-      border-radius: 20px;
-      font-size: 14px;
-      font-weight: bold;
-      cursor: pointer;
-      color: white;
-      transition: background 0.3s ease;
-    }
-    .complete-toggle-btn.complete { background-color: #28a745; }
-    .complete-toggle-btn.incomplete { background-color: #dc3545; }
+      .form-inline {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
 
-    @media print {
-      .no-print, .print-buttons { display: none !important; }
-      .section-box { box-shadow: none; border: 1px solid #ddd; page-break-inside: avoid; }
-      body { background: white; }
-    }
-  </style>
-</head>
-<body>
+      .form-inline input,
+      .form-inline select {
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-family: inherit;
+        flex: 1;
+        min-width: 150px;
+      }
 
-  <!-- هيدر الصفحة المستقلة -->
-  <div class="dashboard-header" style="padding: 15px; margin-bottom: 20px;">
-    <h1 class="page-title" style="font-size: 24px;">📋 ملف الموظف البحري التفصيلي</h1>
-  </div>
+      .complete-toggle-btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: bold;
+        cursor: pointer;
+        color: white;
+        transition: background 0.3s ease;
+      }
+      .complete-toggle-btn.complete {
+        background-color: #28a745;
+      }
+      .complete-toggle-btn.incomplete {
+        background-color: #dc3545;
+      }
 
-  <!-- أزرار الطباعة والتصدير -->
-  <div class="print-buttons" style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 20px;">
-    <a href="export-certificates.html" target="_blank" class="utility-btn btn-export" style="text-decoration: none;">📥 تصدير شهادات الطاقم</a>
-    <button onclick="window.print()" class="utility-btn btn-print">🖨️ طباعة الملف الكامل</button>
-    <button onclick="printSection('certificates-section')" class="utility-btn btn-print">🖨️ طباعة الشهادات</button>
-    <button onclick="printSection('service-section')" class="utility-btn btn-print">🖨️ طباعة سجل الخدمة</button>
-  </div>
+      @media print {
+        .no-print,
+        .print-buttons {
+          display: none !important;
+        }
+        .section-box {
+          box-shadow: none;
+          border: 1px solid #ddd;
+          page-break-inside: avoid;
+        }
+        body {
+          background: white;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- هيدر الصفحة المستقلة -->
+    <div class="dashboard-header" style="padding: 15px; margin-bottom: 20px">
+      <h1 class="page-title" style="font-size: 24px">
+        📋 ملف الموظف البحري التفصيلي
+      </h1>
+    </div>
 
-  <!-- خيارات الطباعة -->
-  <div class="no-print" style="text-align: center; margin-bottom: 15px; background: white; padding: 10px; border-radius: 8px; display: inline-block;">
-    <label style="font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 5px;">
-      <input type="checkbox" id="toggle-evaluation-print" checked style="width: 16px; height: 16px;">
-      📋 تضمين التقييم (Evaluation) في الطباعة
-    </label>
-  </div>
+    <!-- أزرار الطباعة والتصدير -->
+    <div
+      class="print-buttons"
+      style="
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+      "
+    >
+      <a
+        href="export-certificates.html"
+        target="_blank"
+        class="utility-btn btn-export"
+        style="text-decoration: none"
+        >📥 تصدير شهادات الطاقم</a
+      >
+      <button onclick="window.print()" class="utility-btn btn-print">
+        🖨️ طباعة الملف الكامل
+      </button>
+      <button
+        onclick="printSection('certificates-section')"
+        class="utility-btn btn-print"
+      >
+        🖨️ طباعة الشهادات
+      </button>
+      <button
+        onclick="printSection('service-section')"
+        class="utility-btn btn-print"
+      >
+        🖨️ طباعة سجل الخدمة
+      </button>
+    </div>
 
-  <!-- قسم المعلومات الشخصية (الهوية) -->
-  <div class="profile-header">
-    <div class="profile-image-container">
-      <img id="profile-image" src="default-avatar.png" alt="صورة الموظف" style="width: 120px; height: 120px; object-fit: cover; border-radius: 12px; border: 3px solid #1a237e; background: #eee;" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjAiIGhlaWdodD0iMTIwIiB2aWV3Qm94PSIwIDAgMjQgMjQiPjxwYXRoIGZpbGw9IiNjY2MiIGQ9Ik0xMiAxMmMyLjIxIDAgNC0xLjc5IDQtNHMtMS43OS00LTQtNC00IDEuNzktNCA0IDEuNzkgNCA0IDRtMCAyYy0yLjY3IDAtOCAxLjM0LTggNHYyYTEgMSAwIDAgMCAxIDFoMTRhMSAxIDAgMCAwIDEtMXYtMmMwLTIuNjYtNS4zMy00LTgtNHoiLz48L3N2Zz4='">
-      <div class="no-print" style="margin-top: 10px;">
-        <label class="utility-btn btn-export" style="padding: 4px 8px; font-size: 12px; cursor: pointer;">
-          📤 تغيير
-          <input type="file" id="upload-image" accept="image/*" style="display: none;" onchange="uploadEmployeeImage()">
-        </label>
-        <button id="delete-image-btn" onclick="deleteEmployeeImage()" class="utility-btn btn-logout" style="padding: 4px 8px; font-size: 12px; float: none; margin-top: 0;">🗑️ حذف</button>
+    <!-- خيارات الطباعة -->
+    <div
+      class="no-print"
+      style="
+        text-align: center;
+        margin-bottom: 15px;
+        background: white;
+        padding: 10px;
+        border-radius: 8px;
+        display: inline-block;
+      "
+    >
+      <label
+        style="
+          font-weight: bold;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 5px;
+        "
+      >
+        <input
+          type="checkbox"
+          id="toggle-evaluation-print"
+          checked
+          style="width: 16px; height: 16px"
+        />
+        📋 تضمين التقييم (Evaluation) في الطباعة
+      </label>
+    </div>
+
+    <!-- قسم المعلومات الشخصية (الهوية) -->
+    <div class="profile-header">
+      <div class="profile-image-container">
+        <img
+          id="profile-image"
+          src="default-avatar.png"
+          alt="صورة الموظف"
+          style="
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 12px;
+            border: 3px solid #1a237e;
+            background: #eee;
+          "
+          onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjAiIGhlaWdodD0iMTIwIiB2aWV3Qm94PSIwIDAgMjQgMjQiPjxwYXRoIGZpbGw9IiNjY2MiIGQ9Ik0xMiAxMmMyLjIxIDAgNC0xLjc5IDQtNHMtMS43OS00LTQtNC00IDEuNzktNCA0IDEuNzkgNCA0IDRtMCAyYy0yLjY3IDAtOCAxLjM0LTggNHYyYTEgMSAwIDAgMCAxIDFoMTRhMSAxIDAgMCAwIDEtMXYtMmMwLTIuNjYtNS4zMy00LTgtNHoiLz48L3N2Zz4='"
+        />
+        <div class="no-print" style="margin-top: 10px">
+          <label
+            class="utility-btn btn-export"
+            style="padding: 4px 8px; font-size: 12px; cursor: pointer"
+          >
+            📤 تغيير
+            <input
+              type="file"
+              id="upload-image"
+              accept="image/*"
+              style="display: none"
+              onchange="uploadEmployeeImage()"
+            />
+          </label>
+          <button
+            id="delete-image-btn"
+            onclick="deleteEmployeeImage()"
+            class="utility-btn btn-logout"
+            style="
+              padding: 4px 8px;
+              font-size: 12px;
+              float: none;
+              margin-top: 0;
+            "
+          >
+            🗑️ حذف
+          </button>
+        </div>
+      </div>
+
+      <div class="profile-info">
+        <div class="info-card">
+          <strong>👤 الاسم:</strong> <span id="profile-name">---</span>
+        </div>
+        <div class="info-card">
+          <strong>🎖️ الرتبة:</strong> <span id="profile-rank">---</span>
+        </div>
+        <div class="info-card">
+          <strong>⚓ الحالة:</strong> <span id="profile-status">---</span>
+        </div>
+        <div class="info-card">
+          <strong>⛴️ الناقلة:</strong> <span id="profile-ship">---</span>
+        </div>
+
+        <div class="info-card">
+          <strong>📱 الهاتف 1:</strong>
+          <input id="profile-phone1" type="text" placeholder="0780xxxxxxx" />
+        </div>
+        <div class="info-card">
+          <strong>📞 الهاتف 2:</strong>
+          <input id="profile-phone2" type="text" placeholder="0770xxxxxxx" />
+        </div>
+        <div class="info-card" style="grid-column: 1 / -1">
+          <strong>📍 العنوان:</strong>
+          <input
+            id="profile-address"
+            type="text"
+            placeholder="مثلاً: البصرة - المعقل"
+          />
+        </div>
+      </div>
+
+      <div
+        class="no-print"
+        style="width: 100%; text-align: left; margin-top: 10px"
+      >
+        <button onclick="updateEmployeeInfo()" class="utility-btn btn-add">
+          💾 حفظ معلومات الاتصال
+        </button>
       </div>
     </div>
-    
-    <div class="profile-info">
-      <div class="info-card"><strong>👤 الاسم:</strong> <span id="profile-name">---</span></div>
-      <div class="info-card"><strong>🎖️ الرتبة:</strong> <span id="profile-rank">---</span></div>
-      <div class="info-card"><strong>⚓ الحالة:</strong> <span id="profile-status">---</span></div>
-      <div class="info-card"><strong>⛴️ الناقلة:</strong> <span id="profile-ship">---</span></div>
-      
-      <div class="info-card"><strong>📱 الهاتف 1:</strong> <input id="profile-phone1" type="text" placeholder="0780xxxxxxx"></div>
-      <div class="info-card"><strong>📞 الهاتف 2:</strong> <input id="profile-phone2" type="text" placeholder="0770xxxxxxx"></div>
-      <div class="info-card" style="grid-column: 1 / -1;"><strong>📍 العنوان:</strong> <input id="profile-address" type="text" placeholder="مثلاً: البصرة - المعقل"></div>
-    </div>
-    
-    <div class="no-print" style="width: 100%; text-align: left; margin-top: 10px;">
-      <button onclick="updateEmployeeInfo()" class="utility-btn btn-add">💾 حفظ معلومات الاتصال</button>
-    </div>
-  </div>
 
-  <!-- قسم الشهادات -->
-  <div class="section-box" id="certificates-section">
-    <h3 class="section-title">
-      🎓 الشهادات البحرية
-      <div class="no-print" style="font-size: 14px; font-weight: normal;">
-        <span id="completion-status-msg" style="margin-left: 10px; color: #d32f2f;"></span>
-        <button id="toggle-complete-btn" class="complete-toggle-btn">جارٍ التحميل...</button>
+    <!-- قسم الشهادات -->
+    <div class="section-box" id="certificates-section">
+      <h3 class="section-title">
+        🎓 الشهادات البحرية
+        <div class="no-print" style="font-size: 14px; font-weight: normal">
+          <span
+            id="completion-status-msg"
+            style="margin-left: 10px; color: #d32f2f"
+          ></span>
+          <button id="toggle-complete-btn" class="complete-toggle-btn">
+            جارٍ التحميل...
+          </button>
+        </div>
+      </h3>
+
+      <div class="form-inline no-print">
+        <input type="text" id="cert-name" placeholder="اسم الشهادة" />
+        <input type="date" id="cert-issue" title="تاريخ الإصدار" />
+        <input type="date" id="cert-expiry" title="تاريخ النفاذ" />
+        <button
+          class="utility-btn btn-add"
+          onclick="addCertificate()"
+          style="margin: 0"
+        >
+          ➕ إضافة شهادة
+        </button>
       </div>
-    </h3> 
 
-    <div class="form-inline no-print">
-      <input type="text" id="cert-name" placeholder="اسم الشهادة">
-      <input type="date" id="cert-issue" title="تاريخ الإصدار">
-      <input type="date" id="cert-expiry" title="تاريخ النفاذ">
-      <button class="utility-btn btn-add" onclick="addCertificate()" style="margin: 0;">➕ إضافة شهادة</button>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>اسم الشهادة</th>
+              <th>تاريخ الإصدار</th>
+              <th>تاريخ النفاذ</th>
+              <th class="no-print">إجراءات</th>
+              <th class="no-print">الملف (PDF/صورة)</th>
+            </tr>
+          </thead>
+          <tbody id="certificateTableBody"></tbody>
+        </table>
+      </div>
     </div>
 
-    <div class="table-container">
-      <table>
-        <thead>
-          <tr>
-            <th>اسم الشهادة</th>
-            <th>تاريخ الإصدار</th>
-            <th>تاريخ النفاذ</th>
-            <th class="no-print">إجراءات</th>
-            <th class="no-print">الملف (PDF/صورة)</th>
-          </tr>
-        </thead>
-        <tbody id="certificateTableBody"></tbody>
-      </table>
+    <!-- ملخص Sea Time -->
+    <div
+      class="section-box"
+      style="background: #fff3e0; border: 1px solid #ffe0b2"
+    >
+      <h3
+        style="
+          color: #e65100;
+          margin-top: 0;
+          border-bottom: 1px solid #ffcc80;
+          padding-bottom: 10px;
+        "
+      >
+        🧭 ملخص الخدمة البحرية
+      </h3>
+      <div
+        style="
+          display: flex;
+          gap: 40px;
+          justify-content: center;
+          font-size: 18px;
+          color: #d84315;
+        "
+      >
+        <p class="no-print" style="margin: 0">
+          <strong>عدد التنقلات:</strong> <span id="sea-moves">0</span>
+        </p>
+        <p style="margin: 0">
+          <strong>إجمالي الأيام في البحر:</strong>
+          <span id="sea-total-days">0</span> يوم
+        </p>
+      </div>
     </div>
-  </div>
 
-  <!-- ملخص Sea Time -->
-  <div class="section-box" style="background: #fff3e0; border: 1px solid #ffe0b2;">
-    <h3 style="color: #e65100; margin-top: 0; border-bottom: 1px solid #ffcc80; padding-bottom: 10px;">🧭 ملخص الخدمة البحرية</h3>
-    <div style="display: flex; gap: 40px; justify-content: center; font-size: 18px; color: #d84315;">
-      <p class="no-print" style="margin: 0;"><strong>عدد التنقلات:</strong> <span id="sea-moves">0</span></p>
-      <p style="margin: 0;"><strong>إجمالي الأيام في البحر:</strong> <span id="sea-total-days">0</span> يوم</p>
+    <!-- سجل الخدمة التفصيلي -->
+    <div class="section-box" id="service-section">
+      <h3 class="section-title">
+        📅 سجل الخدمة البحرية
+        <span
+          style="
+            font-size: 14px;
+            font-weight: normal;
+            background: #e3f2fd;
+            padding: 4px 10px;
+            border-radius: 20px;
+          "
+          >📊 متوسط التقييم:
+          <span id="average-evaluation" style="font-weight: bold">—</span></span
+        >
+      </h3>
+
+      <div
+        class="form-inline no-print"
+        style="background: #f5f5f5; padding: 15px; border-radius: 8px"
+      >
+        <select
+          id="filterType"
+          onchange="filterServiceTable()"
+          style="max-width: 150px"
+        >
+          <option value="all">تصفية: الكل</option>
+          <option value="service">تصفية: الصعود فقط</option>
+          <option value="rest">تصفية: الاستراحة فقط</option>
+        </select>
+        <select id="service-ship">
+          <option value="">اختر الناقلة</option>
+        </select>
+        <select id="service-status">
+          <option value="">اختر الحالة</option>
+        </select>
+        <input type="date" id="service-join" title="من تاريخ" />
+        <input type="date" id="service-leave" title="إلى تاريخ" />
+        <select id="service-rank">
+          <option value="">اختر الرتبة</option>
+        </select>
+        <button
+          class="utility-btn btn-add"
+          onclick="addServiceEntry()"
+          style="margin: 0"
+        >
+          ➕ إضافة خدمة
+        </button>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>الناقلة</th>
+              <th>الحالة</th>
+              <th>من تاريخ</th>
+              <th>إلى تاريخ</th>
+              <th>المدة</th>
+              <th>الرتبة</th>
+              <th>التقييم</th>
+              <th class="no-print">إجراءات</th>
+            </tr>
+          </thead>
+          <tbody id="seaTimeProfileBody"></tbody>
+        </table>
+      </div>
     </div>
-  </div>
 
-  <!-- سجل الخدمة التفصيلي -->
-  <div class="section-box" id="service-section">
-    <h3 class="section-title">
-      📅 سجل الخدمة البحرية
-      <span style="font-size: 14px; font-weight: normal; background: #e3f2fd; padding: 4px 10px; border-radius: 20px;">📊 متوسط التقييم: <span id="average-evaluation" style="font-weight: bold;">—</span></span>
-    </h3>  
-    
-    <div class="form-inline no-print" style="background: #f5f5f5; padding: 15px; border-radius: 8px;">
-      <select id="filterType" onchange="filterServiceTable()" style="max-width: 150px;">
-        <option value="all">تصفية: الكل</option>
-        <option value="service">تصفية: الصعود فقط</option>
-        <option value="rest">تصفية: الاستراحة فقط</option>
-      </select>
-      <select id="service-ship"><option value="">اختر الناقلة</option></select>
-      <select id="service-status"><option value="">اختر الحالة</option></select>
-      <input type="date" id="service-join" title="من تاريخ">
-      <input type="date" id="service-leave" title="إلى تاريخ">
-      <select id="service-rank"><option value="">اختر الرتبة</option></select>
-      <button class="utility-btn btn-add" onclick="addServiceEntry()" style="margin: 0;">➕ إضافة خدمة</button>
-    </div>    
-    
-    <div class="table-container">
-      <table>
-        <thead>
-          <tr>
-            <th>الناقلة</th>
-            <th>الحالة</th>
-            <th>من تاريخ</th>
-            <th>إلى تاريخ</th>
-            <th>المدة</th>
-            <th>الرتبة</th>
-            <th>التقييم</th>
-            <th class="no-print">إجراءات</th>
-          </tr>
-        </thead>      
-        <tbody id="seaTimeProfileBody"></tbody>
-      </table>
-    </div>
-  </div>
-  
-  <!-- بداية سكربتات الجافاسكريبت -->
-  <script>
-    let fullHistory = []; 
-    const SUPABASE_URL = "https://hhglsrugbayccdboasaj.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhoZ2xzcnVnYmF5Y2NkYm9hc2FqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI5NTEzMDIsImV4cCI6MjA1ODUyNzMwMn0._wHDCT00aa4IQYJNzpL4hjcz9BURslqJt9OUtfxjxlM";
-    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    <!-- بداية سكربتات الجافاسكريبت -->
+    <script>
+      let fullHistory = [];
+      const SUPABASE_URL = 'https://hhglsrugbayccdboasaj.supabase.co';
+      const SUPABASE_ANON_KEY =
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhoZ2xzcnVnYmF5Y2NkYm9hc2FqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI5NTEzMDIsImV4cCI6MjA1ODUyNzMwMn0._wHDCT00aa4IQYJNzpL4hjcz9BURslqJt9OUtfxjxlM';
+      const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const employeeId = urlParams.get("id");
-
-    async function loadEmployeeProfile() {
-      if (!employeeId) return;
-
-      const { data: crew } = await sb.from("crew_list").select("*").eq("id", employeeId).single();
-      if (crew) {
-        document.getElementById("profile-name").textContent = crew.name;
-        document.getElementById("profile-rank").textContent = crew.rank;
-        document.getElementById("profile-status").textContent = crew.status;
-        document.getElementById("profile-ship").textContent = crew.ship;
-        document.getElementById("profile-phone1").value = crew.phone1 || "";
-        document.getElementById("profile-phone2").value = crew.phone2 || "";
-        document.getElementById("profile-address").value = crew.address || "";
-      }
-      if (crew.image_url) {
-        document.getElementById("profile-image").src = crew.image_url;
+      // ✅ تأكيد الحذف بكلمة المرور
+      function confirmDelete(msg = 'تأكيد الحذف') {
+        const pass = prompt(`🔒 ${msg}\n\nأدخل كلمة المرور للمتابعة:`);
+        if (pass === null) return false;
+        if (pass !== '1982') {
+          alert('❌ كلمة المرور غير صحيحة');
+          return false;
+        }
+        return true;
       }
 
-      const { data: history } = await sb.from("history").select("*").eq("employee_id", employeeId);
-      fullHistory = history || [];
-      renderServiceTable(fullHistory);
+      const urlParams = new URLSearchParams(window.location.search);
+      const employeeId = urlParams.get('id');
 
-      loadCertificates();
-    }
+      async function loadEmployeeProfile() {
+        if (!employeeId) return;
 
-    async function updateEmployeeInfo() {
-      const phone1 = document.getElementById("profile-phone1").value.trim();
-      const phone2 = document.getElementById("profile-phone2").value.trim();
-      const address = document.getElementById("profile-address").value.trim();
-
-      const { error } = await sb
-        .from("crew_list")
-        .update({ phone1, phone2, address })
-        .eq("id", employeeId);
-
-      if (error) {
-        alert("❌ فشل التحديث: " + error.message);
-      } else {
-        alert("✅ تم حفظ معلومات الموظف بنجاح");
-      }
-    }
-
-    async function deleteServiceEntry(id) {
-      if (!confirm("هل أنت متأكد من حذف هذه الخدمة؟")) return;
-      await sb.from("history").delete().eq("id", id);
-      loadEmployeeProfile();
-    }
-
-    async function editServiceEntry(button, id) {
-      const row = button.closest("tr");
-      const cells = row.querySelectorAll("td");
-      const [shipCell, statusCell, joinCell, leaveCell, durationCell, rankCell, evalCell] = cells;
-
-      if (button.textContent.includes("✏️")) {
-        shipCell.contentEditable = statusCell.contentEditable = joinCell.contentEditable = leaveCell.contentEditable = durationCell.contentEditable = rankCell.contentEditable = true;
-
-        const currentEval = evalCell.textContent.trim().split(" ")[0];
-        evalCell.innerHTML = `
-          <select id="eval-select" style="padding: 4px; border-radius: 4px;">
-            <option value="">—</option>
-            <option value="1" ${currentEval === "1" ? "selected" : ""}>1 - Excellent</option>
-            <option value="2" ${currentEval === "2" ? "selected" : ""}>2 - Very Good</option>
-            <option value="3" ${currentEval === "3" ? "selected" : ""}>3 - Good</option>
-            <option value="4" ${currentEval === "4" ? "selected" : ""}>4 - Average</option>
-            <option value="5" ${currentEval === "5" ? "selected" : ""}>5 - Poor</option>
-          </select>
-        `;
-        shipCell.focus();
-        button.textContent = "💾";
-        button.className = "action-btn btn-profile"; 
-      } else {
-        shipCell.contentEditable = statusCell.contentEditable = joinCell.contentEditable = leaveCell.contentEditable = durationCell.contentEditable = rankCell.contentEditable = false;
-        button.textContent = "✏️";
-        button.className = "action-btn btn-edit";
-
-        const joinDate = joinCell.textContent.trim() === "" ? null : joinCell.textContent.trim();
-        const leaveDate = leaveCell.textContent.trim() === "" ? null : leaveCell.textContent.trim();
-        const evalValue = document.getElementById("eval-select").value;
-
-        const { error } = await sb.from("history").update({
-          ship: shipCell.textContent.trim(),
-          status: statusCell.textContent.trim(),
-          join_date: joinDate,
-          leave_date: leaveDate,
-          duration: calculateDuration(joinDate, leaveDate),
-          rank: rankCell.textContent.trim(),
-          evaluation: evalValue ? parseInt(evalValue) : null
-        }).eq("id", id);
-
-        if (error) alert("فشل التعديل: " + error.message);
-        else loadEmployeeProfile(); 
-      }
-    }
-
-    async function loadCertificates() {
-      const { data: certs } = await sb.from("certificates").select("*").eq("employee_id", employeeId);
-      const today = new Date();
-
-      document.getElementById("certificateTableBody").innerHTML = certs.map(cert => {
-        let bgColor = "";
-        let expiryDisplay = cert.expiry_date;
-
-        if (cert.expiry_date) {
-          const expiry = new Date(cert.expiry_date);
-          const diffDays = Math.floor((expiry - today) / (1000 * 60 * 60 * 24));
-
-          if (!isNaN(diffDays)) {
-            if (diffDays < 0) bgColor = "background-color: #ffcdd2; color: #d32f2f; font-weight: bold;"; 
-            else if (diffDays <= 60) bgColor = "background-color: #fff9c4; color: #f57f17; font-weight: bold;"; 
-            else bgColor = "background-color: #e8f5e9; color: #2e7d32; font-weight: bold;";
-          }
+        const { data: crew } = await sb
+          .from('crew_list')
+          .select('*')
+          .eq('id', employeeId)
+          .single();
+        if (crew) {
+          document.getElementById('profile-name').textContent = crew.name;
+          document.getElementById('profile-rank').textContent = crew.rank;
+          document.getElementById('profile-status').textContent = crew.status;
+          document.getElementById('profile-ship').textContent = crew.ship;
+          document.getElementById('profile-phone1').value = crew.phone1 || '';
+          document.getElementById('profile-phone2').value = crew.phone2 || '';
+          document.getElementById('profile-address').value = crew.address || '';
+        }
+        if (crew.image_url) {
+          document.getElementById('profile-image').src = crew.image_url;
         }
 
-        return `<tr>
+        const { data: history } = await sb
+          .from('history')
+          .select('*')
+          .eq('employee_id', employeeId);
+        fullHistory = history || [];
+        renderServiceTable(fullHistory);
+
+        loadCertificates();
+      }
+
+      async function updateEmployeeInfo() {
+        const phone1 = document.getElementById('profile-phone1').value.trim();
+        const phone2 = document.getElementById('profile-phone2').value.trim();
+        const address = document.getElementById('profile-address').value.trim();
+
+        const { error } = await sb
+          .from('crew_list')
+          .update({ phone1, phone2, address })
+          .eq('id', employeeId);
+
+        if (error) {
+          alert('❌ فشل التحديث: ' + error.message);
+        } else {
+          alert('✅ تم حفظ معلومات الموظف بنجاح');
+        }
+      }
+
+      async function deleteServiceEntry(id) {
+        if (!confirmDelete('هل تريد حذف هذا السجل؟')) return;
+        await sb.from('history').delete().eq('id', id);
+        loadEmployeeProfile();
+      }
+
+      async function editServiceEntry(button, id) {
+        const row = button.closest('tr');
+        const cells = row.querySelectorAll('td');
+        const [
+          shipCell,
+          statusCell,
+          joinCell,
+          leaveCell,
+          durationCell,
+          rankCell,
+          evalCell,
+        ] = cells;
+
+        if (button.textContent.includes('✏️')) {
+          shipCell.contentEditable =
+            statusCell.contentEditable =
+            joinCell.contentEditable =
+            leaveCell.contentEditable =
+            durationCell.contentEditable =
+            rankCell.contentEditable =
+              true;
+
+          const currentEval = evalCell.textContent.trim().split(' ')[0];
+          evalCell.innerHTML = `
+          <select id="eval-select" style="padding: 4px; border-radius: 4px;">
+            <option value="">—</option>
+            <option value="1" ${
+              currentEval === '1' ? 'selected' : ''
+            }>1 - Excellent</option>
+            <option value="2" ${
+              currentEval === '2' ? 'selected' : ''
+            }>2 - Very Good</option>
+            <option value="3" ${
+              currentEval === '3' ? 'selected' : ''
+            }>3 - Good</option>
+            <option value="4" ${
+              currentEval === '4' ? 'selected' : ''
+            }>4 - Average</option>
+            <option value="5" ${
+              currentEval === '5' ? 'selected' : ''
+            }>5 - Poor</option>
+          </select>
+        `;
+          shipCell.focus();
+          button.textContent = '💾';
+          button.className = 'action-btn btn-profile';
+        } else {
+          shipCell.contentEditable =
+            statusCell.contentEditable =
+            joinCell.contentEditable =
+            leaveCell.contentEditable =
+            durationCell.contentEditable =
+            rankCell.contentEditable =
+              false;
+          button.textContent = '✏️';
+          button.className = 'action-btn btn-edit';
+
+          const joinDate =
+            joinCell.textContent.trim() === ''
+              ? null
+              : joinCell.textContent.trim();
+          const leaveDate =
+            leaveCell.textContent.trim() === ''
+              ? null
+              : leaveCell.textContent.trim();
+          const evalValue = document.getElementById('eval-select').value;
+
+          const { error } = await sb
+            .from('history')
+            .update({
+              ship: shipCell.textContent.trim(),
+              status: statusCell.textContent.trim(),
+              join_date: joinDate,
+              leave_date: leaveDate,
+              duration: calculateDuration(joinDate, leaveDate),
+              rank: rankCell.textContent.trim(),
+              evaluation: evalValue ? parseInt(evalValue) : null,
+            })
+            .eq('id', id);
+
+          if (error) alert('فشل التعديل: ' + error.message);
+          else loadEmployeeProfile();
+        }
+      }
+
+      async function loadCertificates() {
+        const { data: certs } = await sb
+          .from('certificates')
+          .select('*')
+          .eq('employee_id', employeeId);
+        const today = new Date();
+
+        document.getElementById('certificateTableBody').innerHTML = certs
+          .map((cert) => {
+            let bgColor = '';
+            let expiryDisplay = cert.expiry_date;
+
+            if (cert.expiry_date) {
+              const expiry = new Date(cert.expiry_date);
+              const diffDays = Math.floor(
+                (expiry - today) / (1000 * 60 * 60 * 24)
+              );
+
+              if (!isNaN(diffDays)) {
+                if (diffDays < 0)
+                  bgColor =
+                    'background-color: #ffcdd2; color: #d32f2f; font-weight: bold;';
+                else if (diffDays <= 60)
+                  bgColor =
+                    'background-color: #fff9c4; color: #f57f17; font-weight: bold;';
+                else
+                  bgColor =
+                    'background-color: #e8f5e9; color: #2e7d32; font-weight: bold;';
+              }
+            }
+
+            return `<tr>
           <td contenteditable="false">${cert.name}</td>
-          <td contenteditable="false">${cert.issue_date || ""}</td>
-          <td contenteditable="false" style="${bgColor}">${expiryDisplay || ""}</td>
+          <td contenteditable="false">${cert.issue_date || ''}</td>
+          <td contenteditable="false" style="${bgColor}">${
+              expiryDisplay || ''
+            }</td>
           <td class="actions no-print">
-            <button class="action-btn btn-edit" onclick="editCertificate(this, '${cert.id}')">✏️</button>
-            <button class="action-btn btn-delete" onclick="deleteCertificate('${cert.id}')">🗑️</button>
+            <button class="action-btn btn-edit" onclick="editCertificate(this, '${
+              cert.id
+            }')">✏️</button>
+            <button class="action-btn btn-delete" onclick="deleteCertificate('${
+              cert.id
+            }')">🗑️</button>
           </td>
           <td class="no-print">
             <div style="display: flex; justify-content: center; align-items: center; gap: 10px;">
               <label class="action-btn btn-profile" style="cursor: pointer; padding: 4px 8px; font-size: 12px; margin: 0;">
                 📤 رفع
-                <input type="file" accept=".pdf,.png,.jpg" style="display: none" onchange="uploadCertificateFile('${cert.id}', this.files[0])" />
+                <input type="file" accept=".pdf,.png,.jpg" style="display: none" onchange="uploadCertificateFile('${
+                  cert.id
+                }', this.files[0])" />
               </label>
-              ${cert.document_url ? `
+              ${
+                cert.document_url
+                  ? `
                 <a href="${cert.document_url}" target="_blank" title="عرض الملف" style="text-decoration: none;">📎</a>
                 <a href="${cert.document_url}" download title="تحميل الملف" style="text-decoration: none;">⬇️</a>
                 <button onclick="deleteCertificateDocument('${cert.id}', '${cert.document_url}')" class="action-btn btn-delete" style="padding: 2px 6px;" title="حذف الملف">🗑️</button>
-              ` : '<span style="color:#aaa; font-size:12px;">لا يوجد ملف</span>'}
+              `
+                  : '<span style="color:#aaa; font-size:12px;">لا يوجد ملف</span>'
+              }
             </div>
           </td>
         </tr>`;
-      }).join('');
-    }
-
-    async function addCertificate() {
-      const name = document.getElementById("cert-name").value.trim();
-      const issue = document.getElementById("cert-issue").value;
-      const expiry = document.getElementById("cert-expiry").value;
-      if (!name || !issue || !expiry) {
-        alert("يرجى ملء جميع الحقول");
-        return;
+          })
+          .join('');
       }
 
-      const { error } = await sb.from("certificates").insert({
-        employee_id: employeeId, name, issue_date: issue, expiry_date: expiry
-      });
+      async function addCertificate() {
+        const name = document.getElementById('cert-name').value.trim();
+        const issue = document.getElementById('cert-issue').value;
+        const expiry = document.getElementById('cert-expiry').value;
+        if (!name || !issue || !expiry) {
+          alert('يرجى ملء جميع الحقول');
+          return;
+        }
 
-      if (error) alert("حدث خطأ أثناء الحفظ: " + error.message);
-      else {
-        document.getElementById("cert-name").value = "";
-        document.getElementById("cert-issue").value = "";
-        document.getElementById("cert-expiry").value = "";
-        loadCertificates();
+        const { error } = await sb.from('certificates').insert({
+          employee_id: employeeId,
+          name,
+          issue_date: issue,
+          expiry_date: expiry,
+        });
+
+        if (error) alert('حدث خطأ أثناء الحفظ: ' + error.message);
+        else {
+          document.getElementById('cert-name').value = '';
+          document.getElementById('cert-issue').value = '';
+          document.getElementById('cert-expiry').value = '';
+          loadCertificates();
+        }
       }
-    }
 
-    async function deleteCertificate(id) {
-      if (!confirm("هل أنت متأكد من حذف هذه الشهادة؟")) return;
+      async function deleteCertificate(id) {
+        if (!confirmDelete('هل تريد حذف هذه الشهادة؟')) return;
 
-      const { data, error: fetchError } = await sb.from("certificates").select("document_url").eq("id", id).single();
-      if (fetchError) { alert("فشل في جلب بيانات الشهادة."); return; }
+        const { data, error: fetchError } = await sb
+          .from('certificates')
+          .select('document_url')
+          .eq('id', id)
+          .single();
+        if (fetchError) {
+          alert('فشل في جلب بيانات الشهادة.');
+          return;
+        }
 
-      if (data.document_url) {
-        const filePath = data.document_url.split("/").pop(); 
-        const { error: deleteFileError } = await sb.storage.from("certificates-docs").remove([filePath]);
-        if (deleteFileError) { alert("فشل حذف الملف من التخزين."); return; }
-      }
+        if (data.document_url) {
+          const filePath = data.document_url.split('/').pop();
+          const { error: deleteFileError } = await sb.storage
+            .from('certificates-docs')
+            .remove([filePath]);
+          if (deleteFileError) {
+            alert('فشل حذف الملف من التخزين.');
+            return;
+          }
+        }
 
-      const { error: deleteRowError } = await sb.from("certificates").delete().eq("id", id);
-      if (deleteRowError) alert("فشل حذف السطر من قاعدة البيانات.");
-      else loadCertificates(); 
-    }
-
-    function calculateDuration(startDate, endDate) {
-      if (!startDate || !endDate) return 0;
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      if (isNaN(start) || isNaN(end)) return 0;
-      return Math.max(0, Math.ceil((end - start) / (1000 * 60 * 60 * 24)));
-    }
-
-    async function editCertificate(button, id) {
-      const row = button.closest("tr");
-      const cells = row.querySelectorAll("td");
-      const nameCell = cells[0], issueCell = cells[1], expiryCell = cells[2];
-
-      if (button.textContent.includes("✏️")) {
-        nameCell.contentEditable = issueCell.contentEditable = expiryCell.contentEditable = true;
-        nameCell.focus();
-        button.textContent = "💾";
-        button.className = "action-btn btn-profile";
-      } else {
-        nameCell.contentEditable = issueCell.contentEditable = expiryCell.contentEditable = false;
-        button.textContent = "✏️";
-        button.className = "action-btn btn-edit";
-
-        const { error } = await sb.from("certificates").update({
-          name: nameCell.textContent.trim(),
-          issue_date: issueCell.textContent.trim(),
-          expiry_date: expiryCell.textContent.trim()
-        }).eq("id", id);
-
-        if (error) alert("فشل التعديل: " + error.message);
+        const { error: deleteRowError } = await sb
+          .from('certificates')
+          .delete()
+          .eq('id', id);
+        if (deleteRowError) alert('فشل حذف السطر من قاعدة البيانات.');
         else loadCertificates();
       }
-    }
 
-    async function addServiceEntry() {
-      const ship = document.getElementById("service-ship").value.trim();
-      const status = document.getElementById("service-status").value.trim();
-      const join_date = document.getElementById("service-join").value;
-      const leave_date = document.getElementById("service-leave").value;
-      const rank = document.getElementById("service-rank").value.trim();
-
-      if (!ship || !status || !join_date || !rank) {
-        alert("⚠️ يرجى ملء الحقول المطلوبة: الناقلة، الحالة، من تاريخ، الرتبة");
-        return;
+      function calculateDuration(startDate, endDate) {
+        if (!startDate || !endDate) return 0;
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        if (isNaN(start) || isNaN(end)) return 0;
+        return Math.max(0, Math.ceil((end - start) / (1000 * 60 * 60 * 24)));
       }
 
-      let dynamicLeaveDate = leave_date || null;
-      let duration = 0;
-      if (join_date && dynamicLeaveDate) duration = calculateDuration(join_date, dynamicLeaveDate);
-      else if (join_date && !dynamicLeaveDate) duration = calculateDuration(join_date, new Date().toISOString().split("T")[0]);
+      async function editCertificate(button, id) {
+        const row = button.closest('tr');
+        const cells = row.querySelectorAll('td');
+        const nameCell = cells[0],
+          issueCell = cells[1],
+          expiryCell = cells[2];
 
-      const { error } = await sb.from("history").insert({
-        employee_id: employeeId, ship, status, join_date, leave_date: dynamicLeaveDate, rank, duration
+        if (button.textContent.includes('✏️')) {
+          nameCell.contentEditable =
+            issueCell.contentEditable =
+            expiryCell.contentEditable =
+              true;
+          nameCell.focus();
+          button.textContent = '💾';
+          button.className = 'action-btn btn-profile';
+        } else {
+          nameCell.contentEditable =
+            issueCell.contentEditable =
+            expiryCell.contentEditable =
+              false;
+          button.textContent = '✏️';
+          button.className = 'action-btn btn-edit';
+
+          const { error } = await sb
+            .from('certificates')
+            .update({
+              name: nameCell.textContent.trim(),
+              issue_date: issueCell.textContent.trim(),
+              expiry_date: expiryCell.textContent.trim(),
+            })
+            .eq('id', id);
+
+          if (error) alert('فشل التعديل: ' + error.message);
+          else loadCertificates();
+        }
+      }
+
+      async function addServiceEntry() {
+        const ship = document.getElementById('service-ship').value.trim();
+        const status = document.getElementById('service-status').value.trim();
+        const join_date = document.getElementById('service-join').value;
+        const leave_date = document.getElementById('service-leave').value;
+        const rank = document.getElementById('service-rank').value.trim();
+
+        if (!ship || !status || !join_date || !rank) {
+          alert(
+            '⚠️ يرجى ملء الحقول المطلوبة: الناقلة، الحالة، من تاريخ، الرتبة'
+          );
+          return;
+        }
+
+        let dynamicLeaveDate = leave_date || null;
+        let duration = 0;
+        if (join_date && dynamicLeaveDate)
+          duration = calculateDuration(join_date, dynamicLeaveDate);
+        else if (join_date && !dynamicLeaveDate)
+          duration = calculateDuration(
+            join_date,
+            new Date().toISOString().split('T')[0]
+          );
+
+        const { error } = await sb.from('history').insert({
+          employee_id: employeeId,
+          ship,
+          status,
+          join_date,
+          leave_date: dynamicLeaveDate,
+          rank,
+          duration,
+        });
+
+        if (error) alert('❌ فشل في إضافة الخدمة: ' + error.message);
+        else {
+          document.getElementById('service-ship').value = '';
+          document.getElementById('service-status').value = '';
+          document.getElementById('service-join').value = '';
+          document.getElementById('service-leave').value = '';
+          document.getElementById('service-rank').value = '';
+          loadEmployeeProfile();
+        }
+      }
+
+      async function uploadEmployeeImage() {
+        const fileInput = document.getElementById('upload-image');
+        const file = fileInput.files[0];
+        if (!file) return;
+
+        if (file.size > 300 * 1024) {
+          alert('❌ حجم الصورة أكبر من 300KB.');
+          return;
+        }
+
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${employeeId}.${fileExt}`;
+        const filePath = fileName;
+
+        const { error: uploadError } = await sb.storage
+          .from('employees')
+          .upload(filePath, file, { upsert: true });
+        if (uploadError) {
+          alert('فشل رفع الصورة: ' + uploadError.message);
+          return;
+        }
+
+        // ✅ التعديل هنا: استخدام sb بدلاً من supabase
+        const { data } = sb.storage.from('employees').getPublicUrl(filePath);
+        const imageUrl = data?.publicUrl;
+
+        const { error: updateError } = await sb
+          .from('crew_list')
+          .update({ image_url: imageUrl })
+          .eq('id', employeeId);
+
+        if (updateError) {
+          alert('فشل حفظ الرابط: ' + updateError.message);
+        } else {
+          document.getElementById('profile-image').src = imageUrl;
+          alert('✅ تم رفع الصورة بنجاح!');
+        }
+      }
+
+      async function deleteEmployeeImage() {
+        if (!confirmDelete('هل تريد حذف صورة الموظف؟')) return;
+        const filePath = `${employeeId}.jpg`; // افتراض الامتداد
+        await sb.storage.from('employees').remove([filePath]);
+        const { error } = await sb
+          .from('crew_list')
+          .update({ image_url: null })
+          .eq('id', employeeId);
+        if (!error)
+          document.getElementById('profile-image').src = 'default-avatar.png';
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        loadEmployeeProfile();
+        loadServiceDropdowns();
       });
 
-      if (error) alert("❌ فشل في إضافة الخدمة: " + error.message);
-      else {
-        document.getElementById("service-ship").value = "";
-        document.getElementById("service-status").value = "";
-        document.getElementById("service-join").value = "";
-        document.getElementById("service-leave").value = "";
-        document.getElementById("service-rank").value = "";
-        loadEmployeeProfile(); 
+      const rankOrder = [
+        'ربان',
+        'رئيس ضباط',
+        'رئيس مهندسين',
+        'ضابط ثاني',
+        'ضابط ثالث',
+        'ضابط رابع',
+        'مهندس ثاني',
+        'مهندس ثالث',
+        'مهندس رابع',
+        'مهندس كهرباء',
+        'رقيب سطحة',
+        'مراقب مضخة',
+        'بحار',
+        'كهربائي',
+        'ميكانيك',
+        'مراقب غرفة ماكنة',
+        'طباخ',
+        'مأمور مائدة',
+      ];
+
+      async function loadServiceDropdowns() {
+        const { data: crew } = await sb
+          .from('crew_list')
+          .select('ship, status');
+        if (!crew) return;
+
+        const shipSelect = document.getElementById('service-ship');
+        const statusSelect = document.getElementById('service-status');
+        const rankSelect = document.getElementById('service-rank');
+
+        const ships = [...new Set(crew.map((c) => c.ship).filter(Boolean))];
+        const statuses = [
+          ...new Set(crew.map((c) => c.status).filter(Boolean)),
+        ];
+
+        ships
+          .sort()
+          .forEach((ship) => shipSelect.appendChild(new Option(ship, ship)));
+        statuses
+          .sort()
+          .forEach((status) =>
+            statusSelect.appendChild(new Option(status, status))
+          );
+        rankOrder.forEach((rank) =>
+          rankSelect.appendChild(new Option(rank, rank))
+        );
       }
-    }
 
-    async function uploadEmployeeImage() {
-      const fileInput = document.getElementById("upload-image");
-      const file = fileInput.files[0];
-      if (!file) return;
+      function renderServiceTable(data, fullList = fullHistory) {
+        let totalDays = 0;
 
-      if (file.size > 300 * 1024) { alert("❌ حجم الصورة أكبر من 300KB."); return; }
+        fullList.sort(
+          (a, b) =>
+            new Date(b.join_date || b.leave_date || '1900-01-01') -
+            new Date(a.join_date || a.leave_date || '1900-01-01')
+        );
+        data.sort(
+          (a, b) =>
+            new Date(b.join_date || b.leave_date || '1900-01-01') -
+            new Date(a.join_date || a.leave_date || '1900-01-01')
+        );
 
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${employeeId}.${fileExt}`;
-      const filePath = fileName;
+        document.getElementById('seaTimeProfileBody').innerHTML = data
+          .map((entry) => {
+            const fullIndex = fullList.findIndex((e) => e.id === entry.id);
+            const nextEntry = fullList[fullIndex - 1];
+            const prevEntry = fullList[fullIndex + 1];
 
-      const { error: uploadError } = await sb.storage.from("employees").upload(filePath, file, { upsert: true });
-      if (uploadError) { alert("فشل رفع الصورة: " + uploadError.message); return; }
+            const duration = getServiceDuration(entry, nextEntry, prevEntry);
+            if (entry.ship !== 'استراحة') totalDays += duration;
 
-      // ✅ التعديل هنا: استخدام sb بدلاً من supabase
-      const { data } = sb.storage.from("employees").getPublicUrl(filePath);
-      const imageUrl = data?.publicUrl;
-
-      const { error: updateError } = await sb.from("crew_list").update({ image_url: imageUrl }).eq("id", employeeId);
-      
-      if (updateError) {
-          alert("فشل حفظ الرابط: " + updateError.message);
-      } else { 
-          document.getElementById("profile-image").src = imageUrl; 
-          alert("✅ تم رفع الصورة بنجاح!");
-      }
-    }
-
-    async function deleteEmployeeImage() {
-      const filePath = `${employeeId}.jpg`; // افتراض الامتداد
-      await sb.storage.from("employees").remove([filePath]);
-      const { error } = await sb.from("crew_list").update({ image_url: null }).eq("id", employeeId);
-      if (!error) document.getElementById("profile-image").src = "default-avatar.png";
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      loadEmployeeProfile();
-      loadServiceDropdowns();
-    });
-
-    const rankOrder = ["ربان", "رئيس ضباط", "رئيس مهندسين", "ضابط ثاني", "ضابط ثالث", "ضابط رابع", "مهندس ثاني", "مهندس ثالث", "مهندس رابع", "مهندس كهرباء", "رقيب سطحة", "مراقب مضخة", "بحار", "كهربائي", "ميكانيك", "مراقب غرفة ماكنة", "طباخ", "مأمور مائدة"];
-
-    async function loadServiceDropdowns() {
-      const { data: crew } = await sb.from("crew_list").select("ship, status");
-      if (!crew) return;
-
-      const shipSelect = document.getElementById("service-ship");
-      const statusSelect = document.getElementById("service-status");
-      const rankSelect = document.getElementById("service-rank");
-
-      const ships = [...new Set(crew.map(c => c.ship).filter(Boolean))];
-      const statuses = [...new Set(crew.map(c => c.status).filter(Boolean))];
-
-      ships.sort().forEach(ship => shipSelect.appendChild(new Option(ship, ship)));
-      statuses.sort().forEach(status => statusSelect.appendChild(new Option(status, status)));
-      rankOrder.forEach(rank => rankSelect.appendChild(new Option(rank, rank)));
-    }
-
-    function renderServiceTable(data, fullList = fullHistory) {
-      let totalDays = 0;
-
-      fullList.sort((a, b) => new Date(b.join_date || b.leave_date || "1900-01-01") - new Date(a.join_date || a.leave_date || "1900-01-01"));
-      data.sort((a, b) => new Date(b.join_date || b.leave_date || "1900-01-01") - new Date(a.join_date || a.leave_date || "1900-01-01"));
-
-      document.getElementById("seaTimeProfileBody").innerHTML = data.map((entry) => {
-        const fullIndex = fullList.findIndex(e => e.id === entry.id);
-        const nextEntry = fullList[fullIndex - 1];
-        const prevEntry = fullList[fullIndex + 1];
-
-        const duration = getServiceDuration(entry, nextEntry, prevEntry);
-        if (entry.ship !== "استراحة") totalDays += duration;
-
-        return `<tr>
+            return `<tr>
           <td>${entry.ship}</td>
           <td>${entry.status}</td>
-          <td>${entry.join_date || ""}</td>
-          <td>${entry.leave_date || ""}</td>
+          <td>${entry.join_date || ''}</td>
+          <td>${entry.leave_date || ''}</td>
           <td>${duration} يوم</td>
-          <td>${entry.rank || "—"}</td>
-          <td>${entry.evaluation ? `${entry.evaluation} - ${evaluationText(entry.evaluation)}` : "—"}</td>
+          <td>${entry.rank || '—'}</td>
+          <td>${
+            entry.evaluation
+              ? `${entry.evaluation} - ${evaluationText(entry.evaluation)}`
+              : '—'
+          }</td>
           <td class="actions no-print">
-            <button class="action-btn btn-edit" onclick="editServiceEntry(this, '${entry.id}')">✏️</button>
-            <button class="action-btn btn-delete" onclick="deleteServiceEntry('${entry.id}')">🗑️</button>
+            <button class="action-btn btn-edit" onclick="editServiceEntry(this, '${
+              entry.id
+            }')">✏️</button>
+            <button class="action-btn btn-delete" onclick="deleteServiceEntry('${
+              entry.id
+            }')">🗑️</button>
           </td>
         </tr>`;
-      }).join("");
+          })
+          .join('');
 
-      const ratings = data.map(e => e.evaluation).filter(v => v).map(Number);
-      const avg = ratings.length ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(2) : null;
+        const ratings = data
+          .map((e) => e.evaluation)
+          .filter((v) => v)
+          .map(Number);
+        const avg = ratings.length
+          ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(2)
+          : null;
 
-      document.getElementById("average-evaluation").textContent = avg ? `${avg} - ${evaluationText(Math.round(avg))}` : "—";
-      document.getElementById("sea-total-days").textContent = totalDays;
-      document.getElementById("sea-moves").textContent = data.length;
-    }
-
-    function evaluationText(score) {
-      switch (parseInt(score)) {
-        case 1: return "Excellent"; case 2: return "Very Good"; case 3: return "Good";
-        case 4: return "Average"; case 5: return "Poor"; default: return "—";
-      }
-    }
-
-    function getServiceDuration(entry, nextEntry, prevEntry) {
-      const today = new Date();
-      const join = entry.join_date ? new Date(entry.join_date) : null;
-      const leave = entry.leave_date ? new Date(entry.leave_date) : null;
-      const nextJoin = nextEntry?.join_date ? new Date(nextEntry.join_date) : null;
-
-      if (entry.ship !== "استراحة" && join && leave) return calculateDuration(join, leave);
-      if (entry.ship !== "استراحة" && join && !leave && nextEntry?.ship === "استراحة" && nextEntry?.leave_date) return calculateDuration(join, new Date(nextEntry.leave_date));
-      if (entry.ship !== "استراحة" && join && !leave) return calculateDuration(join, today);
-      if (entry.ship === "استراحة" && leave && nextJoin) return calculateDuration(leave, nextJoin);
-      if (entry.ship === "استراحة" && leave && !nextJoin) return calculateDuration(leave, today);
-      return 0;
-    }
-
-    function filterServiceTable() {
-      const type = document.getElementById("filterType").value;
-      const sortedHistory = [...fullHistory].sort((a, b) => new Date(a.join_date || a.leave_date || "1900-01-01") - new Date(b.join_date || b.leave_date || "1900-01-01"));
-      
-      let filtered = [...sortedHistory];
-      if (type === "service") filtered = sortedHistory.filter(e => e.ship !== "استراحة");
-      else if (type === "rest") filtered = sortedHistory.filter(e => e.ship === "استراحة");
-
-      renderServiceTable(filtered, sortedHistory);
-    }
-
-    function printSection(sectionId) {
-      const section = document.getElementById(sectionId);
-      const employeeName = document.getElementById("profile-name").textContent;
-      const profileImage = document.getElementById("profile-image").src;
-      const originalContent = document.body.innerHTML;
-
-      const clonedSection = section.cloneNode(true);
-
-      if (sectionId === 'service-section') {
-        const seaSummary = document.querySelectorAll(".section-box")[1]; 
-        const summaryClone = seaSummary.cloneNode(true);
-        clonedSection.prepend(summaryClone);
+        document.getElementById('average-evaluation').textContent = avg
+          ? `${avg} - ${evaluationText(Math.round(avg))}`
+          : '—';
+        document.getElementById('sea-total-days').textContent = totalDays;
+        document.getElementById('sea-moves').textContent = data.length;
       }
 
-      const includeEval = document.getElementById("toggle-evaluation-print")?.checked;
-      if (!includeEval) {
-        clonedSection.querySelectorAll("td:nth-child(7), th:nth-child(7)").forEach(el => el.remove());
-        const avgEval = clonedSection.querySelector("#average-evaluation");
-        if (avgEval) avgEval.closest("span")?.remove();
+      function evaluationText(score) {
+        switch (parseInt(score)) {
+          case 1:
+            return 'Excellent';
+          case 2:
+            return 'Very Good';
+          case 3:
+            return 'Good';
+          case 4:
+            return 'Average';
+          case 5:
+            return 'Poor';
+          default:
+            return '—';
+        }
       }
 
-      document.body.innerHTML = `
+      function getServiceDuration(entry, nextEntry, prevEntry) {
+        const today = new Date();
+        const join = entry.join_date ? new Date(entry.join_date) : null;
+        const leave = entry.leave_date ? new Date(entry.leave_date) : null;
+        const nextJoin = nextEntry?.join_date
+          ? new Date(nextEntry.join_date)
+          : null;
+
+        if (entry.ship !== 'استراحة' && join && leave)
+          return calculateDuration(join, leave);
+        if (
+          entry.ship !== 'استراحة' &&
+          join &&
+          !leave &&
+          nextEntry?.ship === 'استراحة' &&
+          nextEntry?.leave_date
+        )
+          return calculateDuration(join, new Date(nextEntry.leave_date));
+        if (entry.ship !== 'استراحة' && join && !leave)
+          return calculateDuration(join, today);
+        if (entry.ship === 'استراحة' && leave && nextJoin)
+          return calculateDuration(leave, nextJoin);
+        if (entry.ship === 'استراحة' && leave && !nextJoin)
+          return calculateDuration(leave, today);
+        return 0;
+      }
+
+      function filterServiceTable() {
+        const type = document.getElementById('filterType').value;
+        const sortedHistory = [...fullHistory].sort(
+          (a, b) =>
+            new Date(a.join_date || a.leave_date || '1900-01-01') -
+            new Date(b.join_date || b.leave_date || '1900-01-01')
+        );
+
+        let filtered = [...sortedHistory];
+        if (type === 'service')
+          filtered = sortedHistory.filter((e) => e.ship !== 'استراحة');
+        else if (type === 'rest')
+          filtered = sortedHistory.filter((e) => e.ship === 'استراحة');
+
+        renderServiceTable(filtered, sortedHistory);
+      }
+
+      function printSection(sectionId) {
+        const section = document.getElementById(sectionId);
+        const employeeName =
+          document.getElementById('profile-name').textContent;
+        const profileImage = document.getElementById('profile-image').src;
+        const originalContent = document.body.innerHTML;
+
+        const clonedSection = section.cloneNode(true);
+
+        if (sectionId === 'service-section') {
+          const seaSummary = document.querySelectorAll('.section-box')[1];
+          const summaryClone = seaSummary.cloneNode(true);
+          clonedSection.prepend(summaryClone);
+        }
+
+        const includeEval = document.getElementById(
+          'toggle-evaluation-print'
+        )?.checked;
+        if (!includeEval) {
+          clonedSection
+            .querySelectorAll('td:nth-child(7), th:nth-child(7)')
+            .forEach((el) => el.remove());
+          const avgEval = clonedSection.querySelector('#average-evaluation');
+          if (avgEval) avgEval.closest('span')?.remove();
+        }
+
+        document.body.innerHTML = `
         <div style="font-family: 'Cairo', sans-serif; direction: rtl; padding: 20px;">
           <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 20px;">
-            ${profileImage && !profileImage.includes('default-avatar') ? `<img src="${profileImage}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 10px; border: 1px solid #aaa;">` : ''}
+            ${
+              profileImage && !profileImage.includes('default-avatar')
+                ? `<img src="${profileImage}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 10px; border: 1px solid #aaa;">`
+                : ''
+            }
             <h2 style="margin: 0; color: #1a237e;">🧾 ${employeeName}</h2>
           </div>
           <hr style="margin: 20px 0;">
           ${clonedSection.innerHTML}
         </div>
       `;
-      window.print();
-      document.body.innerHTML = originalContent;
-      location.reload();
-    }
-
-    async function uploadCertificateFile(certId, file) {
-      if (!file) return;
-      const fileName = `${certId}_${file.name}`;
-      const { error: uploadError } = await sb.storage.from("certificates-docs").upload(fileName, file, { upsert: true });
-      if (uploadError) { alert("فشل رفع الملف."); return; }
-
-      const { data } = sb.storage.from("certificates-docs").getPublicUrl(fileName);
-      await sb.from("certificates").update({ document_url: data.publicUrl }).eq("id", certId);
-      loadCertificates();
-    }
-
-    async function deleteCertificateDocument(certId, documentUrl) {
-      const fileName = documentUrl.split('/').pop();
-      await sb.storage.from('certificates-docs').remove([fileName]);
-      await sb.from("certificates").update({ document_url: null }).eq("id", certId);
-      loadCertificates();
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      const employeeId = new URLSearchParams(window.location.search).get("id");
-      if (employeeId) setupCompletionToggle(employeeId);
-    });
-
-    async function setupCompletionToggle(employeeId) {
-      const button = document.getElementById("toggle-complete-btn");
-      const msg = document.getElementById("completion-status-msg");
-      if (!button) return;
-
-      const { data, error } = await sb.from("crew_list").select("is_complete").eq("id", employeeId).single();
-      if (error || !data) { button.textContent = "خطأ!"; button.disabled = true; return; }
-
-      updateToggleButtonUI(button, msg, data.is_complete);
-
-      button.addEventListener("click", async () => {
-        const newState = !button.classList.contains("complete");
-        const { error } = await sb.from("crew_list").update({ is_complete: newState }).eq("id", employeeId);
-        if (!error) updateToggleButtonUI(button, msg, newState);
-      });
-    }
-
-    function updateToggleButtonUI(button, msg, isComplete) {
-      if (isComplete) {
-        button.textContent = "✅ الملف مكتمل";
-        button.className = "complete-toggle-btn complete";
-        msg.textContent = "";
-      } else {
-        button.textContent = "❌ تعيين كمكتمل";
-        button.className = "complete-toggle-btn incomplete";
-        msg.textContent = "⚠ يحتوي هذا الملف على نواقص";
+        window.print();
+        document.body.innerHTML = originalContent;
+        location.reload();
       }
-    }
-  </script>
-</body>
+
+      async function uploadCertificateFile(certId, file) {
+        if (!file) return;
+        const fileName = `${certId}_${file.name}`;
+        const { error: uploadError } = await sb.storage
+          .from('certificates-docs')
+          .upload(fileName, file, { upsert: true });
+        if (uploadError) {
+          alert('فشل رفع الملف.');
+          return;
+        }
+
+        const { data } = sb.storage
+          .from('certificates-docs')
+          .getPublicUrl(fileName);
+        await sb
+          .from('certificates')
+          .update({ document_url: data.publicUrl })
+          .eq('id', certId);
+        loadCertificates();
+      }
+
+      async function deleteCertificateDocument(certId, documentUrl) {
+        if (!confirmDelete('هل تريد حذف ملف الشهادة؟')) return;
+        const fileName = documentUrl.split('/').pop();
+        await sb.storage.from('certificates-docs').remove([fileName]);
+        await sb
+          .from('certificates')
+          .update({ document_url: null })
+          .eq('id', certId);
+        loadCertificates();
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        const employeeId = new URLSearchParams(window.location.search).get(
+          'id'
+        );
+        if (employeeId) setupCompletionToggle(employeeId);
+      });
+
+      async function setupCompletionToggle(employeeId) {
+        const button = document.getElementById('toggle-complete-btn');
+        const msg = document.getElementById('completion-status-msg');
+        if (!button) return;
+
+        const { data, error } = await sb
+          .from('crew_list')
+          .select('is_complete')
+          .eq('id', employeeId)
+          .single();
+        if (error || !data) {
+          button.textContent = 'خطأ!';
+          button.disabled = true;
+          return;
+        }
+
+        updateToggleButtonUI(button, msg, data.is_complete);
+
+        button.addEventListener('click', async () => {
+          const newState = !button.classList.contains('complete');
+          const { error } = await sb
+            .from('crew_list')
+            .update({ is_complete: newState })
+            .eq('id', employeeId);
+          if (!error) updateToggleButtonUI(button, msg, newState);
+        });
+      }
+
+      function updateToggleButtonUI(button, msg, isComplete) {
+        if (isComplete) {
+          button.textContent = '✅ الملف مكتمل';
+          button.className = 'complete-toggle-btn complete';
+          msg.textContent = '';
+        } else {
+          button.textContent = '❌ تعيين كمكتمل';
+          button.className = 'complete-toggle-btn incomplete';
+          msg.textContent = '⚠ يحتوي هذا الملف على نواقص';
+        }
+      }
+    </script>
+  </body>
 </html>
